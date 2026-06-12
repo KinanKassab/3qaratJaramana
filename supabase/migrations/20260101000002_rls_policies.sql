@@ -19,11 +19,12 @@ ALTER TABLE public.saved_searches ENABLE ROW LEVEL SECURITY;
 -- ============================================================
 -- Helper: get current user's role
 -- ============================================================
-CREATE OR REPLACE FUNCTION auth.user_role()
+CREATE OR REPLACE FUNCTION public.user_role()
 RETURNS TEXT
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
+SET search_path = public
 AS $$
   SELECT COALESCE(
     (SELECT role FROM public.users WHERE id = auth.uid()),
@@ -36,7 +37,7 @@ $$;
 -- ============================================================
 CREATE POLICY "users_select_own"
   ON public.users FOR SELECT
-  USING (id = auth.uid() OR auth.user_role() = 'admin');
+  USING (id = auth.uid() OR public.user_role() = 'admin');
 
 CREATE POLICY "users_insert_own"
   ON public.users FOR INSERT
@@ -44,45 +45,45 @@ CREATE POLICY "users_insert_own"
 
 CREATE POLICY "users_update_own"
   ON public.users FOR UPDATE
-  USING (id = auth.uid() OR auth.user_role() = 'admin');
+  USING (id = auth.uid() OR public.user_role() = 'admin');
 
 -- ============================================================
 -- LOCATIONS policies (public read, admin write)
 -- ============================================================
 CREATE POLICY "locations_select_all"
   ON public.locations FOR SELECT
-  USING (is_active = true OR auth.user_role() = 'admin');
+  USING (is_active = true OR public.user_role() = 'admin');
 
 CREATE POLICY "locations_insert_admin"
   ON public.locations FOR INSERT
-  WITH CHECK (auth.user_role() = 'admin');
+  WITH CHECK (public.user_role() = 'admin');
 
 CREATE POLICY "locations_update_admin"
   ON public.locations FOR UPDATE
-  USING (auth.user_role() = 'admin');
+  USING (public.user_role() = 'admin');
 
 CREATE POLICY "locations_delete_admin"
   ON public.locations FOR DELETE
-  USING (auth.user_role() = 'admin');
+  USING (public.user_role() = 'admin');
 
 -- ============================================================
 -- CATEGORIES policies (public read, admin write)
 -- ============================================================
 CREATE POLICY "categories_select_all"
   ON public.categories FOR SELECT
-  USING (is_active = true OR auth.user_role() = 'admin');
+  USING (is_active = true OR public.user_role() = 'admin');
 
 CREATE POLICY "categories_insert_admin"
   ON public.categories FOR INSERT
-  WITH CHECK (auth.user_role() = 'admin');
+  WITH CHECK (public.user_role() = 'admin');
 
 CREATE POLICY "categories_update_admin"
   ON public.categories FOR UPDATE
-  USING (auth.user_role() = 'admin');
+  USING (public.user_role() = 'admin');
 
 CREATE POLICY "categories_delete_admin"
   ON public.categories FOR DELETE
-  USING (auth.user_role() = 'admin');
+  USING (public.user_role() = 'admin');
 
 -- ============================================================
 -- PROPERTIES policies
@@ -92,28 +93,28 @@ CREATE POLICY "properties_select_public"
   USING (
     status != 'draft'
     OR agent_id = auth.uid()
-    OR auth.user_role() = 'admin'
+    OR public.user_role() = 'admin'
   );
 
 CREATE POLICY "properties_insert_agent"
   ON public.properties FOR INSERT
   WITH CHECK (
     auth.uid() = agent_id
-    AND auth.user_role() IN ('agent', 'admin')
+    AND public.user_role() IN ('agent', 'admin')
   );
 
 CREATE POLICY "properties_update_agent"
   ON public.properties FOR UPDATE
   USING (
     auth.uid() = agent_id
-    OR auth.user_role() = 'admin'
+    OR public.user_role() = 'admin'
   );
 
 CREATE POLICY "properties_delete_agent"
   ON public.properties FOR DELETE
   USING (
     auth.uid() = agent_id
-    OR auth.user_role() = 'admin'
+    OR public.user_role() = 'admin'
   );
 
 -- ============================================================
@@ -133,7 +134,7 @@ CREATE POLICY "property_images_insert_agent"
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.properties p
-      WHERE p.id = property_id AND (p.agent_id = auth.uid() OR auth.user_role() = 'admin')
+      WHERE p.id = property_id AND (p.agent_id = auth.uid() OR public.user_role() = 'admin')
     )
   );
 
@@ -142,7 +143,7 @@ CREATE POLICY "property_images_update_agent"
   USING (
     EXISTS (
       SELECT 1 FROM public.properties p
-      WHERE p.id = property_id AND (p.agent_id = auth.uid() OR auth.user_role() = 'admin')
+      WHERE p.id = property_id AND (p.agent_id = auth.uid() OR public.user_role() = 'admin')
     )
   );
 
@@ -151,7 +152,7 @@ CREATE POLICY "property_images_delete_agent"
   USING (
     EXISTS (
       SELECT 1 FROM public.properties p
-      WHERE p.id = property_id AND (p.agent_id = auth.uid() OR auth.user_role() = 'admin')
+      WHERE p.id = property_id AND (p.agent_id = auth.uid() OR public.user_role() = 'admin')
     )
   );
 
@@ -165,7 +166,7 @@ CREATE POLICY "property_videos_select_public"
       SELECT 1 FROM public.properties p
       WHERE p.id = property_id AND p.status != 'draft'
     )
-    OR auth.user_role() IN ('agent', 'admin')
+    OR public.user_role() IN ('agent', 'admin')
   );
 
 CREATE POLICY "property_videos_insert_agent"
@@ -173,7 +174,7 @@ CREATE POLICY "property_videos_insert_agent"
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.properties p
-      WHERE p.id = property_id AND (p.agent_id = auth.uid() OR auth.user_role() = 'admin')
+      WHERE p.id = property_id AND (p.agent_id = auth.uid() OR public.user_role() = 'admin')
     )
   );
 
@@ -182,7 +183,7 @@ CREATE POLICY "property_videos_delete_agent"
   USING (
     EXISTS (
       SELECT 1 FROM public.properties p
-      WHERE p.id = property_id AND (p.agent_id = auth.uid() OR auth.user_role() = 'admin')
+      WHERE p.id = property_id AND (p.agent_id = auth.uid() OR public.user_role() = 'admin')
     )
   );
 
@@ -209,7 +210,7 @@ CREATE POLICY "appointments_select"
   USING (
     user_id = auth.uid()
     OR agent_id = auth.uid()
-    OR auth.user_role() = 'admin'
+    OR public.user_role() = 'admin'
     OR EXISTS (
       SELECT 1 FROM public.properties p
       WHERE p.id = property_id AND p.agent_id = auth.uid()
@@ -225,7 +226,7 @@ CREATE POLICY "appointments_update"
   USING (
     user_id = auth.uid()
     OR agent_id = auth.uid()
-    OR auth.user_role() = 'admin'
+    OR public.user_role() = 'admin'
   );
 
 -- ============================================================
@@ -233,7 +234,7 @@ CREATE POLICY "appointments_update"
 -- ============================================================
 CREATE POLICY "property_views_select_admin"
   ON public.property_views FOR SELECT
-  USING (auth.user_role() = 'admin');
+  USING (public.user_role() = 'admin');
 
 CREATE POLICY "property_views_insert_all"
   ON public.property_views FOR INSERT
@@ -244,11 +245,11 @@ CREATE POLICY "property_views_insert_all"
 -- ============================================================
 CREATE POLICY "notifications_select_own"
   ON public.notifications FOR SELECT
-  USING (user_id = auth.uid() OR auth.user_role() = 'admin');
+  USING (user_id = auth.uid() OR public.user_role() = 'admin');
 
 CREATE POLICY "notifications_insert_admin"
   ON public.notifications FOR INSERT
-  WITH CHECK (auth.user_role() = 'admin');
+  WITH CHECK (public.user_role() = 'admin');
 
 CREATE POLICY "notifications_update_own"
   ON public.notifications FOR UPDATE
