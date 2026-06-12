@@ -14,9 +14,7 @@ import { buildWhatsAppContactLink } from '@shared/utils/whatsapp';
 import { SEO } from '@/components/SEO';
 import { PropertyImageSlider } from '@/components/property/PropertyImageSlider';
 import { PropertyVideoPlayer } from '@/components/property/PropertyVideoPlayer';
-import { SinglePropertyMap } from '@/components/property/PropertyMap';
 import { AmenitiesGrid } from '@/components/property/AmenitiesGrid';
-import { NearbyProperties } from '@/components/property/NearbyProperties';
 import { PropertyShare } from '@/components/property/PropertyShare';
 import { AppointmentBooking } from '@/components/property/AppointmentBooking';
 import { FavoriteButton } from '@/components/property/FavoriteButton';
@@ -179,14 +177,8 @@ export function PropertyDetailPage() {
               <Tabs defaultTab="details">
                 <TabList className="mb-6">
                   <Tab id="details">{t('property.details')}</Tab>
-                  {property.latitude && property.longitude && (
-                    <Tab id="map">{t('property.map')}</Tab>
-                  )}
                   {property.videos && property.videos.length > 0 && (
                     <Tab id="video">{t('property.video')}</Tab>
-                  )}
-                  {property.latitude && property.longitude && (
-                    <Tab id="nearby">{t('property.nearby')}</Tab>
                   )}
                 </TabList>
 
@@ -237,29 +229,13 @@ export function PropertyDetailPage() {
                   )}
                 </TabPanel>
 
-                <TabPanel id="map">
-                  {property.latitude && property.longitude && (
-                    <SinglePropertyMap
-                      lat={property.latitude}
-                      lng={property.longitude}
-                      title={title}
-                    />
-                  )}
-                </TabPanel>
-
                 <TabPanel id="video">
                   {property.videos?.map((video) => (
                     <PropertyVideoPlayer key={video.id} video={video} />
                   ))}
                 </TabPanel>
 
-                <TabPanel id="nearby">
-                  <NearbyProperties
-                    lat={property.latitude}
-                    lng={property.longitude}
-                    excludeId={property.id}
-                  />
-                </TabPanel>
+
               </Tabs>
 
               {/* Share */}

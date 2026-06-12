@@ -18,7 +18,6 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'query-vendor': ['@tanstack/react-query'],
-          'maps-vendor': ['@react-google-maps/api'],
           'ui-vendor': ['framer-motion', 'swiper'],
           'i18n-vendor': ['i18next', 'react-i18next'],
         },

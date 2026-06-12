@@ -42,7 +42,6 @@ export function Header() {
   const navLinks = [
     { to: '/', label: t('nav.home') },
     { to: '/properties', label: t('nav.properties') },
-    { to: '/map', label: t('nav.map') },
     { to: '/compare', label: t('nav.compare') },
   ];
 
