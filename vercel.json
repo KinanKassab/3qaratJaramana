@@ -1,7 +1,7 @@
 {
   "buildCommand": "pnpm --filter @3qarat/web build",
   "outputDirectory": "apps/web/dist",
-  "installCommand": "pnpm install --frozen-lockfile",
+  "installCommand": "npm i -g pnpm@9 && pnpm install --frozen-lockfile",
   "framework": null,
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
