@@ -59,3 +59,7 @@ credentials.json
 .cache/
 *.local
 coverage/
+
+# Vercel (keep project.json for CI linking, ignore local env overrides)
+.vercel/.vercel_env_*
+.vercel/output/
