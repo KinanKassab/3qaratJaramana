@@ -1,0 +1,31 @@
+{
+  "name": "3qarat-jaramana",
+  "private": true,
+  "version": "1.0.0",
+  "description": "عقارات جرمانا — Professional Real Estate Platform",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @3qarat/web dev",
+    "dev:admin": "pnpm --filter @3qarat/admin dev",
+    "dev:mobile": "pnpm --filter @3qarat/mobile start",
+    "build:web": "pnpm --filter @3qarat/web build",
+    "build:admin": "pnpm --filter @3qarat/admin build",
+    "preview:web": "pnpm --filter @3qarat/web preview",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "types:gen": "supabase gen types typescript --local > packages/shared/src/types/database.types.ts"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^9.9.0",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.8",
+    "typescript": "^5.5.3"
+  }
+}
