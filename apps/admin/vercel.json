@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm i -g pnpm@9 && pnpm install --frozen-lockfile",
+  "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @3qarat/admin build",
   "outputDirectory": "apps/admin/dist",
   "framework": null,
