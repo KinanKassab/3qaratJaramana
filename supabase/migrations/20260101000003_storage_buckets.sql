@@ -36,7 +36,7 @@ CREATE POLICY "property_images_agent_insert"
   WITH CHECK (
     bucket_id = 'property-images'
     AND auth.role() = 'authenticated'
-    AND auth.user_role() IN ('agent', 'admin')
+    AND public.user_role() IN ('agent', 'admin')
   );
 
 -- Property Images: owners can delete
@@ -46,7 +46,7 @@ CREATE POLICY "property_images_agent_delete"
     bucket_id = 'property-images'
     AND auth.role() = 'authenticated'
     AND (
-      auth.user_role() = 'admin'
+      public.user_role() = 'admin'
       OR (storage.foldername(name))[1] = auth.uid()::text
     )
   );
