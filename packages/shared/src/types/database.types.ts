@@ -426,11 +426,11 @@ export interface Database {
       };
       increment_view_count: {
         Args: { p_property_id: string };
-        Returns: undefined;
+        Returns: null;
       };
       increment_analytics: {
         Args: { p_property_id: string; p_event_type: string };
-        Returns: undefined;
+        Returns: null;
       };
       get_property_views_per_day: {
         Args: { p_property_id: string; p_days?: number };
