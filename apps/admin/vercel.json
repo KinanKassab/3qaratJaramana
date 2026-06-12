@@ -1,7 +1,7 @@
 {
-  "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @3qarat/admin build",
-  "outputDirectory": "apps/admin/dist",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm --filter @3qarat/admin build",
+  "outputDirectory": "dist",
   "framework": null,
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
