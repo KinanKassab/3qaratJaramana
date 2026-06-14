@@ -231,7 +231,7 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
                   key={n}
                   onClick={() => updateFilter('bedrooms', filters.bedrooms === n ? undefined : n)}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors min-w-[40px]',
+                    'px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors min-w-[44px]',
                     filters.bedrooms === n
                       ? 'bg-primary-500 text-white border-primary-500'
                       : 'border-dark-200 dark:border-dark-600 text-dark-600 dark:text-dark-400'

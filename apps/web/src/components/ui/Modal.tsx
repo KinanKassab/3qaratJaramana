@@ -70,7 +70,7 @@ export function Modal({
               onClick={(e) => e.stopPropagation()}
             >
               {(title || showCloseButton) && (
-                <div className="flex items-center justify-between p-6 border-b border-dark-100 dark:border-dark-700">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-dark-100 dark:border-dark-700">
                   {title && (
                     <h2 className="text-lg font-bold text-dark-900 dark:text-dark-50">{title}</h2>
                   )}
@@ -84,7 +84,7 @@ export function Modal({
                   )}
                 </div>
               )}
-              <div className="p-6">{children}</div>
+              <div className="p-4 sm:p-6">{children}</div>
             </motion.div>
           </div>
         </>

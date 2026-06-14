@@ -236,7 +236,8 @@
     "by": "By",
     "at": "At",
     "currency": "SYP",
-    "sqm": "m²"
+    "sqm": "m²",
+    "call": "Call"
   },
   "errors": {
     "generic": "An unexpected error occurred. Please try again.",

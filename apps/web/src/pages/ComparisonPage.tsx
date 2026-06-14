@@ -152,14 +152,14 @@ export function ComparisonPage() {
             <table className="w-full">
               <thead>
                 <tr>
-                  <th className="w-40 text-start p-4 text-dark-500 font-medium text-sm">
+                  <th className="w-28 sm:w-40 text-start p-4 text-dark-500 font-medium text-sm">
                     {language === 'ar' ? 'التفاصيل' : 'Details'}
                   </th>
                   {properties.map((p) => {
                     const cover = p.images?.find((i) => i.is_cover) ?? p.images?.[0];
                     const title = getLocalizedText(p.title_ar, p.title_en, language);
                     return (
-                      <th key={p.id} className="p-4 min-w-[220px]">
+                      <th key={p.id} className="p-4 min-w-[160px] sm:min-w-[220px]">
                         <div className="relative">
                           {urlSlugs.length === 0 && (
                             <button

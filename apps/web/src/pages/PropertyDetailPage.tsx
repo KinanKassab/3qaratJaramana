@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Bed, Bath, Maximize2, MapPin, Phone, MessageCircle,
-  Share2, Calendar, Building2, Eye, Star
+  Share2, Calendar, Building2, Eye
 } from 'lucide-react';
 import { useProperty } from '@/hooks/useProperties';
 import { useAuthStore } from '@/stores/authStore';
@@ -107,7 +107,7 @@ export function PropertyDetailPage() {
         type="article"
       />
 
-      <div className="pt-20 min-h-screen">
+      <div className="pt-20 pb-20 lg:pb-0 min-h-screen">
         {/* Breadcrumb */}
         <div className="bg-dark-50 dark:bg-dark-900 border-b border-dark-100 dark:border-dark-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
@@ -250,7 +250,7 @@ export function PropertyDetailPage() {
             {/* Sidebar */}
             <div className="space-y-5">
               {/* Price Card */}
-              <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-card p-6 sticky top-24">
+              <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-card p-6 lg:sticky lg:top-24">
                 <div className="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-1" dir="ltr">
                   {formatPrice(property.price, language, 'SYP', property.price_period)}
                 </div>
@@ -315,6 +315,37 @@ export function PropertyDetailPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Mobile sticky bottom contact bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-dark-900 border-t border-dark-100 dark:border-dark-800 p-3 flex gap-2">
+        {property.agent?.phone && (
+          <a
+            href={`tel:${property.agent.phone}`}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dark-200 dark:border-dark-700 text-sm font-semibold text-dark-800 dark:text-dark-200"
+          >
+            <Phone className="h-4 w-4" />
+            {t('common.call')}
+          </a>
+        )}
+        {agentWhatsApp && (
+          <a
+            href={agentWhatsApp}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold"
+          >
+            <MessageCircle className="h-4 w-4" />
+            WhatsApp
+          </a>
+        )}
+        <button
+          onClick={() => setAppointmentOpen(true)}
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-500 text-white text-sm font-semibold"
+        >
+          <Calendar className="h-4 w-4" />
+          {t('property.book_appointment')}
+        </button>
       </div>
 
       {/* Appointment Modal */}

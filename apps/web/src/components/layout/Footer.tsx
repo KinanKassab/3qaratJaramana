@@ -13,7 +13,7 @@ export function Footer() {
   return (
     <footer className="bg-secondary-800 dark:bg-dark-950 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10">
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-4">
@@ -63,7 +63,6 @@ export function Footer() {
               {[
                 { to: '/', label: t('nav.home') },
                 { to: '/properties', label: t('nav.properties') },
-                { to: '/map', label: t('nav.map') },
                 { to: '/compare', label: t('nav.compare') },
                 { to: '/auth', label: t('nav.login') },
               ].map((link) => (

@@ -38,7 +38,7 @@ export function PropertyCard({ property, className, index = 0 }: PropertyCardPro
     >
       <Link to={`/property/${property.slug}`} className="block">
         {/* Image */}
-        <div className="relative overflow-hidden h-52">
+        <div className="relative overflow-hidden h-44 sm:h-52">
           {coverImage ? (
             <img
               src={coverImage.url}
