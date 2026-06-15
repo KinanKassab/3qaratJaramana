@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Home, Search, Map, Heart, User } from 'lucide-react-native';
+import { Home, Search, Heart, User } from 'lucide-react-native';
 import { useUIStore } from '@/stores/uiStore';
 
 const ACTIVE_COLOR = '#C4A35A';
@@ -39,14 +39,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Search size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="map"
-        options={{
-          title: isAr ? 'الخريطة' : 'Map',
-          tabBarIcon: ({ color, size }) => <Map size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
+<Tabs.Screen
         name="favorites"
         options={{
           title: isAr ? 'المفضلة' : 'Favorites',
