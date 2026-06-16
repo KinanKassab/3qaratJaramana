@@ -12,11 +12,9 @@ interface LocationFormData {
   slug: string;
   type: 'country' | 'city' | 'district';
   parent_id: string;
-  lat: string;
-  lng: string;
 }
 
-const emptyForm: LocationFormData = { name_ar: '', name_en: '', slug: '', type: 'city', parent_id: '', lat: '', lng: '' };
+const emptyForm: LocationFormData = { name_ar: '', name_en: '', slug: '', type: 'city', parent_id: '' };
 
 export function LocationsPage() {
   const { language } = useUIStore();
@@ -39,8 +37,6 @@ export function LocationsPage() {
       await supabase.from('locations').insert({
         ...form,
         parent_id: form.parent_id || null,
-        lat: form.lat ? parseFloat(form.lat) : null,
-        lng: form.lng ? parseFloat(form.lng) : null,
       });
     },
     onSuccess: () => {
@@ -89,7 +85,6 @@ export function LocationsPage() {
           <td className="table-cell text-dark-500">{loc.name_en}</td>
           <td className="table-cell"><span className="text-xs bg-dark-100 dark:bg-dark-700 px-2 py-0.5 rounded-full">{loc.type}</span></td>
           <td className="table-cell text-dark-400 text-xs font-mono">{loc.slug}</td>
-          <td className="table-cell text-dark-400 text-xs">{loc.lat ?? '—'}</td>
           <td className="table-cell">
             <button
               onClick={() => deleteMutation.mutate(loc.id)}
@@ -120,7 +115,7 @@ export function LocationsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-dark-100 dark:border-dark-700">
-                {[isAr ? 'الاسم (ع)' : 'Name (AR)', isAr ? 'الاسم (إن)' : 'Name (EN)', isAr ? 'النوع' : 'Type', 'Slug', isAr ? 'إحداثيات' : 'Lat', ''].map(h => (
+                {[isAr ? 'الاسم (ع)' : 'Name (AR)', isAr ? 'الاسم (إن)' : 'Name (EN)', isAr ? 'النوع' : 'Type', 'Slug', ''].map(h => (
                   <th key={h} className="table-header">{h}</th>
                 ))}
               </tr>
@@ -166,16 +161,6 @@ export function LocationsPage() {
                 <option key={l.id} value={l.id}>{l.name_ar} ({l.type})</option>
               ))}
             </select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium mb-1">Lat</label>
-              <input value={form.lat} onChange={e => setForm(p => ({ ...p, lat: e.target.value }))} className="input-base" dir="ltr" type="number" step="any" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Lng</label>
-              <input value={form.lng} onChange={e => setForm(p => ({ ...p, lng: e.target.value }))} className="input-base" dir="ltr" type="number" step="any" />
-            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setAddModal(false)} className="btn-outline">{isAr ? 'إلغاء' : 'Cancel'}</button>
