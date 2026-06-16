@@ -4,7 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Upload, X, Grip, Plus, Trash2, MapPin, Video,
+  Upload, X, Grip, Plus, Trash2, Video,
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '@/lib/supabase';
@@ -70,22 +70,6 @@ export function PropertyFormPage() {
         .select('id, name_ar, name_en, type, parent_id')
         .order('type')
         .order('name_ar');
-      return data ?? [];
-    },
-  });
-
-  const { data: categories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const { data } = await supabase.from('categories').select('id, name_ar, name_en').order('sort_order');
-      return data ?? [];
-    },
-  });
-
-  const { data: agents } = useQuery({
-    queryKey: ['agents'],
-    queryFn: async () => {
-      const { data } = await supabase.from('users').select('id, full_name').in('role', ['agent', 'admin']);
       return data ?? [];
     },
   });
@@ -351,22 +335,13 @@ export function PropertyFormPage() {
           </div>
         </div>
 
-        {/* Location & Category */}
+        {/* Location */}
         <div className="card space-y-5">
           <h2 className="font-semibold text-dark-900 dark:text-dark-100 text-base border-b border-dark-100 dark:border-dark-700 pb-3">
-            {formLabel('الموقع والفئة', 'Location & Category')}
+            {formLabel('الموقع', 'Location')}
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{formLabel('الفئة', 'Category')}</label>
-              <select {...form.register('category_id')} className="input-base">
-                <option value="">{formLabel('اختر الفئة', 'Select Category')}</option>
-                {categories?.map((c: any) => (
-                  <option key={c.id} value={c.id}>{language === 'ar' ? c.name_ar : c.name_en}</option>
-                ))}
-              </select>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1.5">{formLabel('المدينة', 'City')}</label>
               <select
@@ -388,27 +363,6 @@ export function PropertyFormPage() {
                 ))}
               </select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{formLabel('خط العرض', 'Latitude')}</label>
-              <input {...form.register('latitude', { valueAsNumber: true })} type="number" step="any" className="input-base" dir="ltr" placeholder="33.487" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{formLabel('خط الطول', 'Longitude')}</label>
-              <input {...form.register('longitude', { valueAsNumber: true })} type="number" step="any" className="input-base" dir="ltr" placeholder="36.341" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1.5">{formLabel('الوكيل', 'Agent')}</label>
-            <select {...form.register('agent_id')} className="input-base">
-              <option value="">{formLabel('اختر الوكيل', 'Select Agent')}</option>
-              {agents?.map((a: any) => (
-                <option key={a.id} value={a.id}>{a.full_name}</option>
-              ))}
-            </select>
           </div>
         </div>
 
