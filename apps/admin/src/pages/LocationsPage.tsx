@@ -34,10 +34,11 @@ export function LocationsPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await supabase.from('locations').insert({
+      const { error } = await supabase.from('locations').insert({
         ...form,
         parent_id: form.parent_id || null,
       });
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-locations'] });
@@ -162,6 +163,9 @@ export function LocationsPage() {
               ))}
             </select>
           </div>
+          {saveMutation.isError && (
+            <p className="text-red-500 text-sm">{(saveMutation.error as Error)?.message}</p>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setAddModal(false)} className="btn-outline">{isAr ? 'إلغاء' : 'Cancel'}</button>
             <button onClick={() => saveMutation.mutate()} className="btn-primary" disabled={saveMutation.isPending}>
