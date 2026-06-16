@@ -90,7 +90,7 @@ export function PropertyFormPage() {
 
   useEffect(() => {
     if (!existingProperty) return;
-    const p = existingProperty;
+    const p = existingProperty as any;
     form.reset({
       title_ar: p.title_ar ?? '',
       title_en: p.title_en ?? '',
@@ -109,7 +109,6 @@ export function PropertyFormPage() {
       location_id: p.location_id ?? '',
       latitude: p.latitude ?? undefined,
       longitude: p.longitude ?? undefined,
-      agent_id: p.agent_id ?? '',
       is_featured: p.is_featured ?? false,
       price_period: p.price_period ?? undefined,
     });
@@ -155,14 +154,14 @@ export function PropertyFormPage() {
       const payload = {
         ...values,
         amenities: selectedAmenities,
-        agent_id: values.agent_id || user?.id,
+        agent_id: user?.id,
       };
 
       let propertyId = id;
       if (isEditing) {
-        await supabase.from('properties').update(payload).eq('id', id!);
+        await supabase.from('properties').update(payload as any).eq('id', id!);
       } else {
-        const { data } = await supabase.from('properties').insert(payload).select('id').single();
+        const { data } = await supabase.from('properties').insert(payload as any).select('id').single();
         propertyId = data?.id;
       }
 

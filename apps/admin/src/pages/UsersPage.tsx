@@ -44,14 +44,14 @@ export function UsersPage() {
 
   const updateRole = useMutation({
     mutationFn: async ({ id, role }: { id: string; role: string }) => {
-      await supabase.from('users').update({ role }).eq('id', id);
+      await supabase.from('users').update({ role } as any).eq('id', id);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
   });
 
   const toggleActive = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      await supabase.from('users').update({ is_active }).eq('id', id);
+      await supabase.from('users').update({ is_active } as any).eq('id', id);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
   });
