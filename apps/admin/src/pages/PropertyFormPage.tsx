@@ -158,10 +158,11 @@ export function PropertyFormPage() {
       };
 
       let propertyId = id;
+      const db = supabase as any;
       if (isEditing) {
-        await supabase.from('properties').update(payload as any).eq('id', id!);
+        await db.from('properties').update(payload).eq('id', id!);
       } else {
-        const { data } = await supabase.from('properties').insert(payload as any).select('id').single();
+        const { data } = await db.from('properties').insert(payload).select('id').single();
         propertyId = data?.id;
       }
 
@@ -171,7 +172,7 @@ export function PropertyFormPage() {
         if (isEditing) {
           await supabase.from('property_images').delete().eq('property_id', propertyId);
         }
-        await supabase.from('property_images').insert(
+        await db.from('property_images').insert(
           images.map((img, idx) => ({
             property_id: propertyId,
             url: img.url,
@@ -187,7 +188,7 @@ export function PropertyFormPage() {
         if (isEditing) {
           await supabase.from('property_videos').delete().eq('property_id', propertyId);
         }
-        await supabase.from('property_videos').insert(
+        await db.from('property_videos').insert(
           filteredVideos.map((url) => ({ property_id: propertyId, video_url: url }))
         );
       }
