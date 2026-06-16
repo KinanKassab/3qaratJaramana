@@ -4,7 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Upload, X, Grip, Plus, Trash2, MapPin, Video,
+  Upload, X, Grip, Plus, Trash2, Video,
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '@/lib/supabase';
@@ -74,22 +74,6 @@ export function PropertyFormPage() {
     },
   });
 
-  const { data: categories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const { data } = await supabase.from('categories').select('id, name_ar, name_en').order('sort_order');
-      return data ?? [];
-    },
-  });
-
-  const { data: agents } = useQuery({
-    queryKey: ['agents'],
-    queryFn: async () => {
-      const { data } = await supabase.from('users').select('id, full_name').in('role', ['agent', 'admin']);
-      return data ?? [];
-    },
-  });
-
   const { data: existingProperty } = useQuery({
     queryKey: ['property-form', id],
     queryFn: async () => {
@@ -106,7 +90,7 @@ export function PropertyFormPage() {
 
   useEffect(() => {
     if (!existingProperty) return;
-    const p = existingProperty;
+    const p = existingProperty as any;
     form.reset({
       title_ar: p.title_ar ?? '',
       title_en: p.title_en ?? '',
@@ -125,7 +109,6 @@ export function PropertyFormPage() {
       location_id: p.location_id ?? '',
       latitude: p.latitude ?? undefined,
       longitude: p.longitude ?? undefined,
-      agent_id: p.agent_id ?? '',
       is_featured: p.is_featured ?? false,
       price_period: p.price_period ?? undefined,
     });
@@ -171,14 +154,15 @@ export function PropertyFormPage() {
       const payload = {
         ...values,
         amenities: selectedAmenities,
-        agent_id: values.agent_id || user?.id,
+        agent_id: user?.id,
       };
 
       let propertyId = id;
+      const db = supabase as any;
       if (isEditing) {
-        await supabase.from('properties').update(payload).eq('id', id!);
+        await db.from('properties').update(payload).eq('id', id!);
       } else {
-        const { data } = await supabase.from('properties').insert(payload).select('id').single();
+        const { data } = await db.from('properties').insert(payload).select('id').single();
         propertyId = data?.id;
       }
 
@@ -188,7 +172,7 @@ export function PropertyFormPage() {
         if (isEditing) {
           await supabase.from('property_images').delete().eq('property_id', propertyId);
         }
-        await supabase.from('property_images').insert(
+        await db.from('property_images').insert(
           images.map((img, idx) => ({
             property_id: propertyId,
             url: img.url,
@@ -204,7 +188,7 @@ export function PropertyFormPage() {
         if (isEditing) {
           await supabase.from('property_videos').delete().eq('property_id', propertyId);
         }
-        await supabase.from('property_videos').insert(
+        await db.from('property_videos').insert(
           filteredVideos.map((url) => ({ property_id: propertyId, video_url: url }))
         );
       }
@@ -351,22 +335,13 @@ export function PropertyFormPage() {
           </div>
         </div>
 
-        {/* Location & Category */}
+        {/* Location */}
         <div className="card space-y-5">
           <h2 className="font-semibold text-dark-900 dark:text-dark-100 text-base border-b border-dark-100 dark:border-dark-700 pb-3">
-            {formLabel('الموقع والفئة', 'Location & Category')}
+            {formLabel('الموقع', 'Location')}
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{formLabel('الفئة', 'Category')}</label>
-              <select {...form.register('category_id')} className="input-base">
-                <option value="">{formLabel('اختر الفئة', 'Select Category')}</option>
-                {categories?.map((c: any) => (
-                  <option key={c.id} value={c.id}>{language === 'ar' ? c.name_ar : c.name_en}</option>
-                ))}
-              </select>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1.5">{formLabel('المدينة', 'City')}</label>
               <select
@@ -388,27 +363,6 @@ export function PropertyFormPage() {
                 ))}
               </select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{formLabel('خط العرض', 'Latitude')}</label>
-              <input {...form.register('latitude', { valueAsNumber: true })} type="number" step="any" className="input-base" dir="ltr" placeholder="33.487" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">{formLabel('خط الطول', 'Longitude')}</label>
-              <input {...form.register('longitude', { valueAsNumber: true })} type="number" step="any" className="input-base" dir="ltr" placeholder="36.341" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1.5">{formLabel('الوكيل', 'Agent')}</label>
-            <select {...form.register('agent_id')} className="input-base">
-              <option value="">{formLabel('اختر الوكيل', 'Select Agent')}</option>
-              {agents?.map((a: any) => (
-                <option key={a.id} value={a.id}>{a.full_name}</option>
-              ))}
-            </select>
           </div>
         </div>
 

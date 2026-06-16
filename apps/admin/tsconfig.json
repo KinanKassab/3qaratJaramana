@@ -6,6 +6,5 @@
       "@shared/*": ["../../packages/shared/src/*"]
     }
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src"]
 }

@@ -14,17 +14,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   session: null,
 
   initialize() {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    const db = supabase as any;
+    supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: any } }) => {
       if (session?.user) {
-        const { data } = await supabase.from('users').select('*').eq('id', session.user.id).single();
-        set({ session, user: data as User ?? null });
+        const { data } = await db.from('users').select('*').eq('id', session.user.id).single();
+        set({ session, user: (data as unknown as User) ?? null });
       }
     });
 
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    supabase.auth.onAuthStateChange(async (event: any, session: any) => {
       if (session?.user) {
-        const { data } = await supabase.from('users').select('*').eq('id', session.user.id).single();
-        set({ session, user: data as User ?? null });
+        const { data } = await db.from('users').select('*').eq('id', session.user.id).single();
+        set({ session, user: (data as unknown as User) ?? null });
       } else {
         set({ session: null, user: null });
       }

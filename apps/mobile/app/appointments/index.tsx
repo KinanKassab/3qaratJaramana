@@ -30,7 +30,7 @@ export default function AppointmentsScreen() {
       const { data } = await supabase
         .from('appointments')
         .select('*, property:properties(title_ar, title_en, slug)')
-        .eq('requester_id', user.id)
+        .eq('user_id', user.id)
         .order('scheduled_at', { ascending: false });
       return data ?? [];
     },
