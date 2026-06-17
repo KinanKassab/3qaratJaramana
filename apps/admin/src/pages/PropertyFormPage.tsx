@@ -4,7 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Upload, X, Grip, Trash2, Youtube,
+  Upload, X, Grip, Trash2, Video,
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '@/lib/supabase';
@@ -496,15 +496,15 @@ export function PropertyFormPage() {
             {uploadingVideo ? (
               <>
                 <Spinner size="lg" />
-                <p className="text-dark-600 dark:text-dark-400 text-sm mt-3">{formLabel('جارٍ الرفع على يوتيوب...', 'Uploading to YouTube...')}</p>
+                <p className="text-dark-600 dark:text-dark-400 text-sm mt-3">{formLabel('جارٍ رفع الفيديو...', 'Uploading video...')}</p>
               </>
             ) : (
               <>
-                <Youtube className="h-8 w-8 text-red-500 mx-auto mb-3" />
+                <Video className="h-8 w-8 text-dark-400 mx-auto mb-3" />
                 <p className="text-dark-600 dark:text-dark-400 text-sm">
                   {formLabel('اسحب الفيديو هنا أو انقر للاختيار', 'Drag video here or click to select')}
                 </p>
-                <p className="text-dark-400 text-xs mt-1">{formLabel('MP4, MOV, AVI — سيُرفع تلقائياً على يوتيوب', 'MP4, MOV, AVI — auto-uploaded to YouTube')}</p>
+                <p className="text-dark-400 text-xs mt-1">MP4, MOV, AVI</p>
               </>
             )}
           </div>
@@ -515,10 +515,12 @@ export function PropertyFormPage() {
 
           {videoUrls.length > 0 && (
             <div className="space-y-2">
-              {videoUrls.map((url, idx) => (
+              {videoUrls.map((url, idx) => {
+                const videoId = url.split('v=')[1]?.split('&')[0] ?? url;
+                return (
                 <div key={idx} className="flex items-center gap-2 p-3 bg-dark-50 dark:bg-dark-700/50 rounded-xl">
-                  <Youtube className="h-4 w-4 text-red-500 shrink-0" />
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="flex-1 text-sm text-primary-600 dark:text-primary-400 truncate dir-ltr" dir="ltr">{url}</a>
+                  <Video className="h-4 w-4 text-dark-400 shrink-0" />
+                  <span className="flex-1 text-sm text-dark-700 dark:text-dark-300 font-mono">{videoId}</span>
                   <button
                     type="button"
                     onClick={() => setVideoUrls(prev => prev.filter((_, i) => i !== idx))}
@@ -527,7 +529,8 @@ export function PropertyFormPage() {
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
