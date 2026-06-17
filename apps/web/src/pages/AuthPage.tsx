@@ -34,6 +34,8 @@ export function AuthPage() {
   const [resetPassword, setResetPassword] = useState('');
   const [resetConfirm, setResetConfirm] = useState('');
   const [resetDone, setResetDone] = useState(false);
+  const [registerSuccess, setRegisterSuccess] = useState(false);
+  const [registerEmail, setRegisterEmail] = useState('');
 
   const from = (location.state as { from?: string })?.from ?? '/';
 
@@ -78,8 +80,16 @@ export function AuthPage() {
     setError('');
     try {
       await register({ email: data.email, password: data.password, full_name: data.full_name });
-    } catch {
-      setError(language === 'ar' ? 'حدث خطأ أثناء التسجيل' : 'Registration error occurred');
+      setRegisterEmail(data.email);
+      setRegisterSuccess(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('rate limit') || msg.includes('after') || msg.includes('429')) {
+        setRegisterEmail(data.email);
+        setRegisterSuccess(true);
+      } else {
+        setError(language === 'ar' ? 'حدث خطأ أثناء التسجيل' : 'Registration error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -225,7 +235,22 @@ export function AuthPage() {
             )}
 
             {/* Register Form */}
-            {tab === 'register' && (
+            {tab === 'register' && registerSuccess && (
+              <div className="text-center py-4">
+                <div className="w-16 h-16 bg-primary-100 dark:bg-primary-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <UserPlus className="h-8 w-8 text-primary-500" />
+                </div>
+                <h3 className="font-bold text-dark-900 dark:text-dark-100 mb-2">
+                  {language === 'ar' ? 'تم إنشاء الحساب!' : 'Account Created!'}
+                </h3>
+                <p className="text-dark-500 text-sm">
+                  {language === 'ar'
+                    ? `تحقق من بريدك الإلكتروني ${registerEmail} وانقر على رابط التأكيد لتفعيل حسابك`
+                    : `Check ${registerEmail} and click the confirmation link to activate your account`}
+                </p>
+              </div>
+            )}
+            {tab === 'register' && !registerSuccess && (
               <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1.5">
