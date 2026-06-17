@@ -52,7 +52,7 @@ export function Header() {
           'fixed top-0 left-0 right-0 z-40 transition-all duration-300',
           scrolled
             ? 'bg-white/95 dark:bg-dark-900/95 backdrop-blur-md shadow-md'
-            : 'bg-transparent'
+            : 'bg-white/70 dark:bg-dark-900/70 backdrop-blur-sm'
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -82,9 +82,7 @@ export function Header() {
                       'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                       isActive
                         ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/30'
-                        : scrolled
-                        ? 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
-                        : 'text-white/90 hover:text-white hover:bg-white/10'
+                        : 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
                     )
                   }
                 >
@@ -105,9 +103,7 @@ export function Header() {
                 onClick={handleLanguageToggle}
                 className={cn(
                   'p-2 rounded-lg transition-colors flex items-center gap-1 text-sm font-medium',
-                  scrolled
-                    ? 'text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                  'text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
                 )}
                 title="Toggle language"
               >
@@ -118,12 +114,7 @@ export function Header() {
               {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
-                className={cn(
-                  'p-2 rounded-lg transition-colors',
-                  scrolled
-                    ? 'text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                )}
+                className="p-2 rounded-lg transition-colors text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800"
                 title="Toggle theme"
               >
                 {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
@@ -133,12 +124,7 @@ export function Header() {
               {user && (
                 <Link
                   to="/profile?tab=favorites"
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    scrolled
-                      ? 'text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
-                      : 'text-white/80 hover:text-white hover:bg-white/10'
-                  )}
+                  className="p-2 rounded-lg transition-colors text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800"
                 >
                   <Heart className="h-4 w-4" />
                 </Link>
@@ -201,12 +187,7 @@ export function Header() {
                 <div className="hidden sm:flex items-center gap-2">
                   <Link
                     to="/auth"
-                    className={cn(
-                      'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                      scrolled
-                        ? 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
-                        : 'text-white/90 hover:bg-white/10'
-                    )}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800"
                   >
                     {t('nav.login')}
                   </Link>
@@ -222,12 +203,7 @@ export function Header() {
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={cn(
-                  'md:hidden p-2 rounded-lg transition-colors',
-                  scrolled
-                    ? 'text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
-                    : 'text-white hover:bg-white/10'
-                )}
+                className="md:hidden p-2 rounded-lg transition-colors text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800"
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
@@ -240,12 +216,30 @@ export function Header() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: language === 'ar' ? -20 : 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="fixed inset-y-0 end-0 z-50 w-80 max-w-full bg-white dark:bg-dark-900 shadow-2xl md:hidden"
+            exit={{ opacity: 0, x: language === 'ar' ? -20 : 20 }}
+            className="fixed inset-y-0 end-0 z-50 w-80 max-w-full bg-white dark:bg-dark-900 shadow-2xl md:hidden flex flex-col"
           >
-            <div className="flex flex-col h-full pt-20 pb-6 px-6 overflow-y-auto">
+            {/* Sidebar header with close button */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-dark-100 dark:border-dark-800 flex-shrink-0">
+              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                  <span className="text-white font-bold">ع</span>
+                </div>
+                <span className="font-bold text-dark-900 dark:text-white text-sm">
+                  {language === 'ar' ? 'عقارات جرمانا' : '3qarat Jaramana'}
+                </span>
+              </Link>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 rounded-lg text-dark-500 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex flex-col flex-1 pb-6 px-5 overflow-y-auto pt-4">
               <nav className="space-y-1">
                 {navLinks.map((link) => (
                   <NavLink
@@ -291,12 +285,17 @@ export function Header() {
       </AnimatePresence>
 
       {/* Backdrop for mobile menu */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[45] bg-black/50 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
