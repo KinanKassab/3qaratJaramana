@@ -83,8 +83,18 @@ export function PropertyFormPage() {
     defaultValues: {
       listing_type: 'sale',
       status: 'draft',
-      price: 0,
       is_featured: false,
+    },
+  });
+
+  const { data: categories } = useQuery({
+    queryKey: ['all-categories'],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('categories')
+        .select('id, name_ar, name_en')
+        .order('sort_order');
+      return data ?? [];
     },
   });
 
@@ -267,6 +277,21 @@ export function PropertyFormPage() {
             <div>
               <label className="block text-sm font-medium mb-1.5">{formLabel('العنوان بالإنجليزية', 'Title in English')}</label>
               <input {...form.register('title_en')} className="input-base" dir="ltr" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">{formLabel('نوع العقار', 'Property Type')}</label>
+              <select {...form.register('category_id')} className="input-base">
+                <option value="">{formLabel('اختر نوع العقار', 'Select Type')}</option>
+                {(categories ?? []).map((c: any) => (
+                  <option key={c.id} value={c.id}>{language === 'ar' ? c.name_ar : c.name_en}</option>
+                ))}
+              </select>
+              {form.formState.errors.category_id && (
+                <p className="text-red-500 text-xs mt-1">{form.formState.errors.category_id.message}</p>
+              )}
             </div>
           </div>
 
