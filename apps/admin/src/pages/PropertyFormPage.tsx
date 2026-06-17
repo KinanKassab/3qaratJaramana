@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -50,7 +50,38 @@ export function PropertyFormPage() {
   const [images, setImages] = useState<ImageItem[]>([]);
   const [videoUrls, setVideoUrls] = useState<string[]>(['']);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videoUploadError, setVideoUploadError] = useState('');
+  const videoFileInputRef = useRef<HTMLInputElement>(null);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+
+  const handleVideoUpload = async (file: File) => {
+    setUploadingVideo(true);
+    setVideoUploadError('');
+    try {
+      const formData = new FormData();
+      formData.append('video', file);
+      formData.append('title', form.getValues('title_ar') || file.name);
+      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+      const supabaseKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+      const res = await fetch(`${supabaseUrl}/functions/v1/upload-youtube`, {
+        method: 'POST',
+        headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Upload failed');
+      setVideoUrls(prev => {
+        const filtered = prev.filter(Boolean);
+        return [...filtered, data.url];
+      });
+    } catch (err: unknown) {
+      setVideoUploadError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploadingVideo(false);
+      if (videoFileInputRef.current) videoFileInputRef.current.value = '';
+    }
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(propertySchema),
@@ -448,7 +479,6 @@ export function PropertyFormPage() {
           <h2 className="font-semibold text-dark-900 dark:text-dark-100 text-base border-b border-dark-100 dark:border-dark-700 pb-3">
             {formLabel('الفيديوهات', 'Videos')}
           </h2>
-          <p className="text-dark-400 text-xs">{formLabel('أضف روابط يوتيوب غير مدرجة أو Cloudflare Stream', 'Add YouTube Unlisted or Cloudflare Stream URLs')}</p>
           {videoUrls.map((url, idx) => (
             <div key={idx} className="flex gap-2">
               <div className="relative flex-1">
@@ -470,14 +500,38 @@ export function PropertyFormPage() {
               </button>
             </div>
           ))}
-          <button
-            type="button"
-            onClick={() => setVideoUrls(prev => [...prev, ''])}
-            className="btn-ghost text-xs"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {formLabel('إضافة فيديو', 'Add Video')}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setVideoUrls(prev => [...prev, ''])}
+              className="btn-ghost text-xs"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {formLabel('إضافة رابط', 'Add URL')}
+            </button>
+            <button
+              type="button"
+              onClick={() => videoFileInputRef.current?.click()}
+              disabled={uploadingVideo}
+              className="btn-ghost text-xs text-red-500 hover:text-red-600 disabled:opacity-50"
+            >
+              {uploadingVideo ? (
+                <><Spinner size="sm" />{formLabel('جاري الرفع...', 'Uploading...')}</>
+              ) : (
+                <><Upload className="h-3.5 w-3.5" />{formLabel('رفع على يوتيوب', 'Upload to YouTube')}</>
+              )}
+            </button>
+            <input
+              ref={videoFileInputRef}
+              type="file"
+              accept="video/*"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleVideoUpload(f); }}
+            />
+          </div>
+          {videoUploadError && (
+            <p className="text-red-500 text-xs">{videoUploadError}</p>
+          )}
         </div>
 
         {/* Submit */}
