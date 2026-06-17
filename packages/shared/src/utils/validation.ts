@@ -38,7 +38,7 @@ export const propertySchema = z.object({
   title_en: z.string().optional(),
   description_ar: z.string().optional(),
   description_en: z.string().optional(),
-  category_id: z.string().uuid('يرجى اختيار التصنيف'),
+  category_id: z.string().uuid().optional().nullable(),
   location_id: z.string().uuid('يرجى اختيار الموقع'),
   address_ar: z.string().optional(),
   address_en: z.string().optional(),
