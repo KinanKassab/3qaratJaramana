@@ -130,7 +130,6 @@ export function PropertyFormPage() {
       floor_number: p.floor_number ?? undefined,
       listing_type: p.listing_type ?? 'sale',
       status: p.status ?? 'draft',
-      category_id: p.category_id ?? '',
       location_id: p.location_id ?? '',
       latitude: p.latitude ?? undefined,
       longitude: p.longitude ?? undefined,
