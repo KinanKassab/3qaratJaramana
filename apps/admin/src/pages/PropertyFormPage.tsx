@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Upload, X, Grip, Plus, Trash2, Video,
+  Upload, X, Grip, Trash2, Youtube,
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '@/lib/supabase';
@@ -48,11 +48,10 @@ export function PropertyFormPage() {
   const { language } = useUIStore();
   const { user } = useAuthStore();
   const [images, setImages] = useState<ImageItem[]>([]);
-  const [videoUrls, setVideoUrls] = useState<string[]>(['']);
+  const [videoUrls, setVideoUrls] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videoUploadError, setVideoUploadError] = useState('');
-  const videoFileInputRef = useRef<HTMLInputElement>(null);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
   const handleVideoUpload = async (file: File) => {
@@ -71,15 +70,11 @@ export function PropertyFormPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
-      setVideoUrls(prev => {
-        const filtered = prev.filter(Boolean);
-        return [...filtered, data.url];
-      });
+      setVideoUrls(prev => [...prev, data.url]);
     } catch (err: unknown) {
       setVideoUploadError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploadingVideo(false);
-      if (videoFileInputRef.current) videoFileInputRef.current.value = '';
     }
   };
 
@@ -178,6 +173,13 @@ export function PropertyFormPage() {
       setImages((prev) => [...prev, ...uploaded]);
       setUploadingImages(false);
     },
+  });
+
+  const { getRootProps: getVideoRootProps, getInputProps: getVideoInputProps, isDragActive: isVideoDragActive } = useDropzone({
+    accept: { 'video/*': [] },
+    multiple: false,
+    disabled: uploadingVideo,
+    onDrop: (files) => { if (files[0]) handleVideoUpload(files[0]); },
   });
 
   const saveMutation = useMutation({
@@ -479,58 +481,54 @@ export function PropertyFormPage() {
           <h2 className="font-semibold text-dark-900 dark:text-dark-100 text-base border-b border-dark-100 dark:border-dark-700 pb-3">
             {formLabel('الفيديوهات', 'Videos')}
           </h2>
-          {videoUrls.map((url, idx) => (
-            <div key={idx} className="flex gap-2">
-              <div className="relative flex-1">
-                <Video className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-dark-400" />
-                <input
-                  value={url}
-                  onChange={(e) => setVideoUrls(prev => prev.map((u, i) => i === idx ? e.target.value : u))}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  className="input-base ps-9"
-                  dir="ltr"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setVideoUrls(prev => prev.filter((_, i) => i !== idx))}
-                className="p-2 text-dark-400 hover:text-red-500 transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setVideoUrls(prev => [...prev, ''])}
-              className="btn-ghost text-xs"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {formLabel('إضافة رابط', 'Add URL')}
-            </button>
-            <button
-              type="button"
-              onClick={() => videoFileInputRef.current?.click()}
-              disabled={uploadingVideo}
-              className="btn-ghost text-xs text-red-500 hover:text-red-600 disabled:opacity-50"
-            >
-              {uploadingVideo ? (
-                <><Spinner size="sm" />{formLabel('جاري الرفع...', 'Uploading...')}</>
-              ) : (
-                <><Upload className="h-3.5 w-3.5" />{formLabel('رفع على يوتيوب', 'Upload to YouTube')}</>
-              )}
-            </button>
-            <input
-              ref={videoFileInputRef}
-              type="file"
-              accept="video/*"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleVideoUpload(f); }}
-            />
+
+          <div
+            {...getVideoRootProps()}
+            className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-colors ${
+              uploadingVideo
+                ? 'border-red-300 bg-red-50 dark:bg-red-950/10 cursor-wait'
+                : isVideoDragActive
+                  ? 'border-red-500 bg-red-50 dark:bg-red-950/20'
+                  : 'border-dark-300 dark:border-dark-600 hover:border-red-400'
+            }`}
+          >
+            <input {...getVideoInputProps()} />
+            {uploadingVideo ? (
+              <>
+                <Spinner size="lg" />
+                <p className="text-dark-600 dark:text-dark-400 text-sm mt-3">{formLabel('جارٍ الرفع على يوتيوب...', 'Uploading to YouTube...')}</p>
+              </>
+            ) : (
+              <>
+                <Youtube className="h-8 w-8 text-red-500 mx-auto mb-3" />
+                <p className="text-dark-600 dark:text-dark-400 text-sm">
+                  {formLabel('اسحب الفيديو هنا أو انقر للاختيار', 'Drag video here or click to select')}
+                </p>
+                <p className="text-dark-400 text-xs mt-1">{formLabel('MP4, MOV, AVI — سيُرفع تلقائياً على يوتيوب', 'MP4, MOV, AVI — auto-uploaded to YouTube')}</p>
+              </>
+            )}
           </div>
+
           {videoUploadError && (
             <p className="text-red-500 text-xs">{videoUploadError}</p>
+          )}
+
+          {videoUrls.length > 0 && (
+            <div className="space-y-2">
+              {videoUrls.map((url, idx) => (
+                <div key={idx} className="flex items-center gap-2 p-3 bg-dark-50 dark:bg-dark-700/50 rounded-xl">
+                  <Youtube className="h-4 w-4 text-red-500 shrink-0" />
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="flex-1 text-sm text-primary-600 dark:text-primary-400 truncate dir-ltr" dir="ltr">{url}</a>
+                  <button
+                    type="button"
+                    onClick={() => setVideoUrls(prev => prev.filter((_, i) => i !== idx))}
+                    className="p-1 text-dark-400 hover:text-red-500 transition-colors shrink-0"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
