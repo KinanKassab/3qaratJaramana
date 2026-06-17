@@ -10,7 +10,7 @@ interface LocationFormData {
   name_ar: string;
   name_en: string;
   slug: string;
-  type: 'country' | 'city' | 'district';
+  type: 'city' | 'district';
   parent_id: string;
 }
 
@@ -27,7 +27,7 @@ export function LocationsPage() {
   const { data: locations, isLoading } = useQuery({
     queryKey: ['admin-locations'],
     queryFn: async () => {
-      const { data } = await supabase.from('locations').select('*').order('type').order('name_ar');
+      const { data } = await supabase.from('locations').select('*').order('name_ar');
       return data ?? [];
     },
   });
@@ -57,57 +57,20 @@ export function LocationsPage() {
   const toggleExpand = (id: string) => {
     setExpanded(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
 
-  const countries = (locations ?? []).filter((l: any) => l.type === 'country');
-  const getCities = (parentId: string) => (locations ?? []).filter((l: any) => l.type === 'city' && l.parent_id === parentId);
-  const getDistricts = (parentId: string) => (locations ?? []).filter((l: any) => l.type === 'district' && l.parent_id === parentId);
-
-  const LocationRow = ({ loc, depth = 0 }: { loc: any; depth?: number }) => {
-    const children = loc.type === 'country' ? getCities(loc.id) : loc.type === 'city' ? getDistricts(loc.id) : [];
-    const isExpanded = expanded.has(loc.id);
-    return (
-      <>
-        <tr className="hover:bg-dark-50 dark:hover:bg-dark-700/50 border-b border-dark-50 dark:border-dark-700">
-          <td className="table-cell" style={{ paddingInlineStart: `${16 + depth * 24}px` }}>
-            <div className="flex items-center gap-2">
-              {children.length > 0 && (
-                <button onClick={() => toggleExpand(loc.id)} className="text-dark-400">
-                  {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                </button>
-              )}
-              <span className="font-medium text-dark-900 dark:text-dark-100">{loc.name_ar}</span>
-            </div>
-          </td>
-          <td className="table-cell text-dark-500">{loc.name_en}</td>
-          <td className="table-cell"><span className="text-xs bg-dark-100 dark:bg-dark-700 px-2 py-0.5 rounded-full">{loc.type}</span></td>
-          <td className="table-cell text-dark-400 text-xs font-mono">{loc.slug}</td>
-          <td className="table-cell">
-            <button
-              onClick={() => deleteMutation.mutate(loc.id)}
-              className="p-1.5 text-dark-400 hover:text-red-500 transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </td>
-        </tr>
-        {isExpanded && children.map((child: any) => (
-          <LocationRow key={child.id} loc={child} depth={depth + 1} />
-        ))}
-      </>
-    );
-  };
+  const cities = (locations ?? []).filter((l: any) => l.type === 'city');
+  const getDistricts = (cityId: string) => (locations ?? []).filter((l: any) => l.type === 'district' && l.parent_id === cityId);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-dark-900 dark:text-dark-100">{isAr ? 'المناطق' : 'Locations'}</h1>
-        <button onClick={() => setAddModal(true)} className="btn-primary">
-          <Plus className="h-4 w-4" />{isAr ? 'إضافة موقع' : 'Add Location'}
+        <button onClick={() => { setForm(emptyForm); setAddModal(true); }} className="btn-primary">
+          <Plus className="h-4 w-4" />{isAr ? 'إضافة' : 'Add'}
         </button>
       </div>
 
@@ -122,7 +85,49 @@ export function LocationsPage() {
               </tr>
             </thead>
             <tbody>
-              {countries.map((country: any) => <LocationRow key={country.id} loc={country} />)}
+              {cities.map((city: any) => {
+                const districts = getDistricts(city.id);
+                const isExp = expanded.has(city.id);
+                return (
+                  <React.Fragment key={city.id}>
+                    <tr className="hover:bg-dark-50 dark:hover:bg-dark-700/50 border-b border-dark-50 dark:border-dark-700">
+                      <td className="table-cell">
+                        <div className="flex items-center gap-2">
+                          {districts.length > 0 && (
+                            <button onClick={() => toggleExpand(city.id)} className="text-dark-400">
+                              {isExp ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                            </button>
+                          )}
+                          <span className="font-medium text-dark-900 dark:text-dark-100">{city.name_ar}</span>
+                        </div>
+                      </td>
+                      <td className="table-cell text-dark-500">{city.name_en}</td>
+                      <td className="table-cell"><span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 rounded-full">{isAr ? 'مدينة' : 'City'}</span></td>
+                      <td className="table-cell text-dark-400 text-xs font-mono">{city.slug}</td>
+                      <td className="table-cell">
+                        <button onClick={() => deleteMutation.mutate(city.id)} className="p-1.5 text-dark-400 hover:text-red-500 transition-colors">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                    {isExp && districts.map((d: any) => (
+                      <tr key={d.id} className="hover:bg-dark-50 dark:hover:bg-dark-700/50 border-b border-dark-50 dark:border-dark-700">
+                        <td className="table-cell ps-10">
+                          <span className="text-dark-700 dark:text-dark-300">{d.name_ar}</span>
+                        </td>
+                        <td className="table-cell text-dark-500">{d.name_en}</td>
+                        <td className="table-cell"><span className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full">{isAr ? 'حي' : 'District'}</span></td>
+                        <td className="table-cell text-dark-400 text-xs font-mono">{d.slug}</td>
+                        <td className="table-cell">
+                          <button onClick={() => deleteMutation.mutate(d.id)} className="p-1.5 text-dark-400 hover:text-red-500 transition-colors">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -130,6 +135,20 @@ export function LocationsPage() {
 
       <Modal isOpen={addModal} onClose={() => setAddModal(false)} title={isAr ? 'إضافة موقع' : 'Add Location'} size="sm">
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">{isAr ? 'النوع' : 'Type'}</label>
+            <div className="flex gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" value="city" checked={form.type === 'city'} onChange={() => setForm(p => ({ ...p, type: 'city', parent_id: '' }))} />
+                <span>{isAr ? 'مدينة' : 'City'}</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" value="district" checked={form.type === 'district'} onChange={() => setForm(p => ({ ...p, type: 'district' }))} />
+                <span>{isAr ? 'حي/منطقة' : 'District'}</span>
+              </label>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium mb-1">{isAr ? 'الاسم (ع)' : 'Name AR'}</label>
@@ -140,29 +159,24 @@ export function LocationsPage() {
               <input value={form.name_en} onChange={e => setForm(p => ({ ...p, name_en: e.target.value }))} className="input-base" dir="ltr" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Slug</label>
+            <input value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value }))} className="input-base" dir="ltr" placeholder={isAr ? 'مثال: jaramana' : 'e.g. jaramana'} />
+          </div>
+
+          {form.type === 'district' && (
             <div>
-              <label className="block text-sm font-medium mb-1">Slug</label>
-              <input value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value }))} className="input-base" dir="ltr" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">{isAr ? 'النوع' : 'Type'}</label>
-              <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value as any }))} className="input-base">
-                <option value="country">Country</option>
-                <option value="city">City</option>
-                <option value="district">District</option>
+              <label className="block text-sm font-medium mb-1">{isAr ? 'المدينة' : 'City'}</label>
+              <select value={form.parent_id} onChange={e => setForm(p => ({ ...p, parent_id: e.target.value }))} className="input-base" required>
+                <option value="">{isAr ? 'اختر مدينة' : 'Select city'}</option>
+                {cities.map((c: any) => (
+                  <option key={c.id} value={c.id}>{c.name_ar}</option>
+                ))}
               </select>
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">{isAr ? 'الموقع الأب' : 'Parent Location'}</label>
-            <select value={form.parent_id} onChange={e => setForm(p => ({ ...p, parent_id: e.target.value }))} className="input-base">
-              <option value="">{isAr ? 'بدون أب' : 'No Parent'}</option>
-              {(locations ?? []).map((l: any) => (
-                <option key={l.id} value={l.id}>{l.name_ar} ({l.type})</option>
-              ))}
-            </select>
-          </div>
+          )}
+
           {saveMutation.isError && (
             <p className="text-red-500 text-sm">{(saveMutation.error as Error)?.message}</p>
           )}
