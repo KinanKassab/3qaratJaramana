@@ -182,10 +182,20 @@ export function PropertyFormPage() {
 
   const saveMutation = useMutation({
     mutationFn: async (values: FormValues) => {
+      const slugBase = (values.title_en || values.title_ar)
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .slice(0, 60)
+        .replace(/^-+|-+$/g, '');
+      const slug = `${slugBase}-${Date.now().toString().slice(-6)}`;
+
       const payload = {
         ...values,
         amenities: selectedAmenities,
         agent_id: user?.id,
+        ...(isEditing ? {} : { slug }),
       };
 
       let propertyId = id;
