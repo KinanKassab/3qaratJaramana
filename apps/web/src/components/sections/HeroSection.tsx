@@ -4,25 +4,20 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Search, MapPin } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore';
-import { useCategories } from '@/hooks/useCategories';
-import { getLocalizedText } from '@shared/utils/format';
 import { cn } from '@/lib/cn';
 
 export function HeroSection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { language } = useUIStore();
-  const { data: categories } = useCategories();
   const [listingType, setListingType] = useState<'sale' | 'rent'>('sale');
   const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
     if (listingType) params.set('type', listingType);
     if (search) params.set('q', search);
-    if (categoryId) params.set('category_id', categoryId);
     navigate(`/properties?${params.toString()}`);
   };
 
@@ -99,19 +94,6 @@ export function HeroSection() {
                 className="input-base ps-10"
               />
             </div>
-
-            <select
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="input-base sm:w-44"
-            >
-              <option value="">{t('filters.all_categories')}</option>
-              {(categories ?? []).map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {getLocalizedText(cat.name_ar, cat.name_en, language)}
-                </option>
-              ))}
-            </select>
 
             <button type="submit" className="btn-primary whitespace-nowrap">
               <Search className="h-4 w-4" />

@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCities, useDistricts } from '@/hooks/useLocations';
-import { useCategories } from '@/hooks/useCategories';
 import { useUIStore } from '@/stores/uiStore';
 import { getLocalizedText } from '@shared/utils/format';
 import type { PropertyFilters as Filters } from '@shared/types/app.types';
@@ -22,7 +21,6 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
   const [searchParams, setSearchParams] = useSearchParams();
   const { language } = useUIStore();
   const { data: cities } = useCities();
-  const { data: categories } = useCategories();
   const [expanded, setExpanded] = useState(!collapsed);
   const [selectedCityId, setSelectedCityId] = useState('');
 
@@ -30,7 +28,6 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
 
   const [filters, setFilters] = useState<Filters>(() => ({
     listing_type: (searchParams.get('type') as 'sale' | 'rent' | undefined) ?? undefined,
-    category_id: searchParams.get('category_id') ?? undefined,
     location_id: searchParams.get('location_id') ?? undefined,
     min_price: searchParams.get('min_price') ? Number(searchParams.get('min_price')) : undefined,
     max_price: searchParams.get('max_price') ? Number(searchParams.get('max_price')) : undefined,
@@ -63,14 +60,6 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
     setSearchParams({});
   };
 
-  const categoryOptions = [
-    { value: '', label: t('filters.all_categories') },
-    ...(categories ?? []).map((c) => ({
-      value: c.id,
-      label: getLocalizedText(c.name_ar, c.name_en, language),
-    })),
-  ];
-
   const cityOptions = [
     { value: '', label: t('filters.select_city') },
     ...(cities ?? []).map((c) => ({
@@ -99,7 +88,6 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
 
   const hasActiveFilters =
     filters.listing_type ||
-    filters.category_id ||
     filters.location_id ||
     filters.min_price ||
     filters.max_price ||
@@ -153,14 +141,6 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
 
       {expanded && (
         <div className="space-y-4">
-          {/* Category */}
-          <Select
-            label={t('filters.all_categories')}
-            options={categoryOptions}
-            value={filters.category_id ?? ''}
-            onChange={(e) => updateFilter('category_id', e.target.value || undefined)}
-          />
-
           {/* City */}
           <Select
             label={t('filters.select_city')}
