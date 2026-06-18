@@ -91,7 +91,7 @@ export function getYouTubeEmbedUrl(url: string): string | null {
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match?.[1]) {
-      return `https://www.youtube.com/embed/${match[1]}`;
+      return `https://www.youtube.com/embed/${match[1]}?modestbranding=1&rel=0&iv_load_policy=3`;
     }
   }
 
