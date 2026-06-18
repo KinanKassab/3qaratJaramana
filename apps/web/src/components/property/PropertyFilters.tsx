@@ -26,6 +26,15 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
 
   const { data: districts } = useDistricts(selectedCityId || undefined);
 
+  // Pre-select city dropdown when location_id from URL is a city (e.g. from Popular Areas)
+  useEffect(() => {
+    if (!cities || selectedCityId) return;
+    const locId = searchParams.get('location_id');
+    if (locId && cities.some((c) => c.id === locId)) {
+      setSelectedCityId(locId);
+    }
+  }, [cities]);
+
   const [filters, setFilters] = useState<Filters>(() => ({
     listing_type: (searchParams.get('type') as 'sale' | 'rent' | undefined) ?? undefined,
     location_id: searchParams.get('location_id') ?? undefined,
@@ -147,8 +156,9 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
             options={cityOptions}
             value={selectedCityId}
             onChange={(e) => {
-              setSelectedCityId(e.target.value);
-              updateFilter('location_id', undefined);
+              const cityId = e.target.value;
+              setSelectedCityId(cityId);
+              updateFilter('location_id', cityId || undefined);
             }}
           />
 
@@ -157,8 +167,11 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
             <Select
               label={t('filters.select_district')}
               options={districtOptions}
-              value={filters.location_id ?? ''}
-              onChange={(e) => updateFilter('location_id', e.target.value || undefined)}
+              value={
+                // Only show district value if location_id is NOT the city itself
+                filters.location_id !== selectedCityId ? (filters.location_id ?? '') : ''
+              }
+              onChange={(e) => updateFilter('location_id', e.target.value || selectedCityId)}
             />
           )}
 
