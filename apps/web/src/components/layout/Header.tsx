@@ -49,10 +49,10 @@ export function Header() {
     <>
       <header
         className={cn(
-          'fixed top-0 left-0 right-0 z-40 transition-all duration-300',
+          'fixed top-0 left-0 right-0 z-40 transition-all duration-500',
           scrolled
-            ? 'bg-white/95 dark:bg-dark-900/95 backdrop-blur-md shadow-md'
-            : 'bg-white/70 dark:bg-dark-900/70 backdrop-blur-sm'
+            ? 'bg-white/90 dark:bg-dark-900/90 backdrop-blur-md shadow-md'
+            : 'bg-transparent backdrop-blur-sm'
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -63,10 +63,10 @@ export function Header() {
                 <span className="text-white font-bold text-lg">ع</span>
               </div>
               <div className="hidden sm:block">
-                <div className="text-sm font-bold text-dark-900 dark:text-white leading-tight">
+                <div className={cn('text-sm font-bold leading-tight transition-colors', scrolled ? 'text-dark-900 dark:text-white' : 'text-white')}>
                   {language === 'ar' ? 'عقارات جرمانا' : '3qarat Jaramana'}
                 </div>
-                <div className="text-xs text-primary-500">Real Estate</div>
+                <div className="text-xs text-primary-400">Real Estate</div>
               </div>
             </Link>
 
@@ -81,8 +81,12 @@ export function Header() {
                     cn(
                       'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                       isActive
-                        ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/30'
-                        : 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
+                        ? scrolled
+                          ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/30'
+                          : 'text-white bg-white/20'
+                        : scrolled
+                          ? 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
+                          : 'text-white/90 hover:bg-white/10 hover:text-white'
                     )
                   }
                 >
@@ -103,7 +107,9 @@ export function Header() {
                 onClick={handleLanguageToggle}
                 className={cn(
                   'p-2 rounded-lg transition-colors flex items-center gap-1 text-sm font-medium',
-                  'text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
+                  scrolled
+                    ? 'text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
+                    : 'text-white/90 hover:bg-white/10 hover:text-white'
                 )}
                 title="Toggle language"
               >
@@ -114,17 +120,27 @@ export function Header() {
               {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg transition-colors text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800"
+                className={cn(
+                  'p-2 rounded-lg transition-colors',
+                  scrolled
+                    ? 'text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
+                    : 'text-white/90 hover:bg-white/10 hover:text-white'
+                )}
                 title="Toggle theme"
               >
                 {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </button>
 
-              {/* Favorites (mobile) */}
+              {/* Favorites */}
               {user && (
                 <Link
                   to="/profile?tab=favorites"
-                  className="p-2 rounded-lg transition-colors text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800"
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    scrolled
+                      ? 'text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
+                      : 'text-white/90 hover:bg-white/10 hover:text-white'
+                  )}
                 >
                   <Heart className="h-4 w-4" />
                 </Link>
@@ -135,10 +151,13 @@ export function Header() {
                 <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors"
+                    className={cn(
+                      'flex items-center gap-2 p-1.5 rounded-xl transition-colors',
+                      scrolled ? 'hover:bg-dark-100 dark:hover:bg-dark-800' : 'hover:bg-white/10'
+                    )}
                   >
                     <Avatar src={user.avatar_url} name={user.full_name} size="sm" />
-                    <ChevronDown className="h-3 w-3 text-dark-400 hidden sm:block" />
+                    <ChevronDown className={cn('h-3 w-3 hidden sm:block', scrolled ? 'text-dark-400' : 'text-white/60')} />
                   </button>
 
                   <AnimatePresence>
@@ -187,7 +206,12 @@ export function Header() {
                 <div className="hidden sm:flex items-center gap-2">
                   <Link
                     to="/auth"
-                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800"
+                    className={cn(
+                      'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                      scrolled
+                        ? 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
+                        : 'text-white/90 hover:bg-white/10 hover:text-white'
+                    )}
                   >
                     {t('nav.login')}
                   </Link>
@@ -203,7 +227,12 @@ export function Header() {
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg transition-colors text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800"
+                className={cn(
+                  'md:hidden p-2 rounded-lg transition-colors',
+                  scrolled
+                    ? 'text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
+                    : 'text-white/90 hover:bg-white/10 hover:text-white'
+                )}
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
