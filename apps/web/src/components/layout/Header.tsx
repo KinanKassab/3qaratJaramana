@@ -49,10 +49,10 @@ export function Header() {
     <>
       <header
         className={cn(
-          'fixed top-0 left-0 right-0 z-40 transition-all duration-500',
+          'fixed top-0 left-0 right-0 z-40 transition-all duration-500 backdrop-blur-md',
           scrolled
-            ? 'bg-white/90 dark:bg-dark-900/90 backdrop-blur-md shadow-md'
-            : 'bg-transparent backdrop-blur-sm'
+            ? 'bg-white/90 dark:bg-dark-900/90 shadow-md'
+            : 'bg-white/5 dark:bg-dark-900/10'
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
