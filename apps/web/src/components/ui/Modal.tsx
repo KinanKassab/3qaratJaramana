@@ -63,7 +63,7 @@ export function Modal({
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                'w-full bg-white dark:bg-dark-800 rounded-2xl shadow-2xl overflow-hidden',
+                'w-full bg-white dark:bg-dark-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]',
                 sizes[size],
                 className
               )}
@@ -84,7 +84,7 @@ export function Modal({
                   )}
                 </div>
               )}
-              <div className="p-4 sm:p-6">{children}</div>
+              <div className="p-4 sm:p-6 overflow-y-auto">{children}</div>
             </motion.div>
           </div>
         </>

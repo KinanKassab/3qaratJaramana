@@ -10,11 +10,13 @@ export const PROPERTY_SELECT = `
   agent:users!properties_agent_id_fkey(id, full_name, full_name_ar, phone, avatar_url, role)
 ` as const;
 
-export function buildPropertiesQuery(
+export async function buildPropertiesQuery(
   supabase: TypedSupabaseClient,
   filters: PropertyFilters = {}
 ) {
-  let query = supabase.from('properties').select(PROPERTY_SELECT);
+  let query = supabase
+    .from('properties')
+    .select(PROPERTY_SELECT, { count: 'exact' });
 
   // Exclude drafts for public queries
   if (filters.status) {
@@ -28,7 +30,20 @@ export function buildPropertiesQuery(
   }
 
   if (filters.location_id) {
-    query = query.eq('location_id', filters.location_id);
+    // Check if this is a city (has district children); if so, include all districts
+    const { data: children } = await supabase
+      .from('locations')
+      .select('id')
+      .eq('parent_id', filters.location_id);
+
+    if (children && children.length > 0) {
+      query = query.in('location_id', [
+        filters.location_id,
+        ...children.map((c) => c.id),
+      ]);
+    } else {
+      query = query.eq('location_id', filters.location_id);
+    }
   }
 
   if (filters.listing_type) {
