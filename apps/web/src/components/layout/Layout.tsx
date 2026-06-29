@@ -17,7 +17,7 @@ export function Layout() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex-1 pt-16 md:pt-20"
+          className="flex-1"
         >
           <Outlet />
         </motion.main>
