@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -15,10 +15,33 @@ import { cn } from '@/lib/cn';
 export function Header() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuthStore();
   const { theme, language, toggleTheme, setLanguage, mobileMenuOpen, setMobileMenuOpen } = useUIStore();
   const { items: comparisonItems } = useComparisonStore();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Tracks whether the navbar is currently overlapping a dark hero section,
+  // so icon/text colors can switch reliably — CSS mix-blend-mode silently
+  // fails to blend against page content once the header (position: fixed)
+  // is promoted to its own compositing layer by the browser.
+  const [onDark, setOnDark] = useState(location.pathname === '/');
+
+  useEffect(() => {
+    const sentinel = document.getElementById('hero-dark-zone-end');
+    if (!sentinel) {
+      setOnDark(false);
+      return;
+    }
+    const headerHeight = headerRef.current?.offsetHeight ?? 80;
+    const observer = new IntersectionObserver(
+      ([entry]) => setOnDark(entry.isIntersecting),
+      { rootMargin: `-${headerHeight}px 0px 0px 0px`, threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [location.pathname]);
 
   const handleLanguageToggle = () => {
     const newLang = language === 'ar' ? 'en' : 'ar';
@@ -38,13 +61,19 @@ export function Header() {
     { to: '/compare', label: t('nav.compare') },
   ];
 
-  // shared class for blended icon buttons
-  const blendBtn = 'p-2 rounded-lg transition-colors text-white mix-blend-difference hover:bg-white/10';
+  // shared class for icon buttons — color flips explicitly via `onDark` state
+  // (set by the IntersectionObserver above) instead of relying on
+  // mix-blend-mode, which silently fails to blend once the fixed header is
+  // promoted to its own GPU compositing layer.
+  const iconBtn = cn(
+    'p-2 rounded-lg transition-colors',
+    onDark ? 'text-white hover:bg-white/10' : 'text-dark-700 dark:text-dark-200 hover:bg-dark-100 dark:hover:bg-dark-800'
+  );
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-transparent">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <header ref={headerRef} className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-transparent">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16 md:h-20">
 
             {/* Logo */}
@@ -52,11 +81,11 @@ export function Header() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
                 <span className="text-white font-bold text-lg">ع</span>
               </div>
-              <div className="hidden sm:block mix-blend-difference">
-                <div className="text-sm font-bold text-white leading-tight">
+              <div className="hidden sm:block">
+                <div className={cn('text-sm font-bold leading-tight', onDark ? 'text-white' : 'text-dark-900 dark:text-white')}>
                   {language === 'ar' ? 'عقارات جرمانا' : '3qarat Jaramana'}
                 </div>
-                <div className="text-xs text-white/70">Real Estate</div>
+                <div className={cn('text-xs', onDark ? 'text-white/70' : 'text-dark-500 dark:text-dark-400')}>Real Estate</div>
               </div>
             </Link>
 
@@ -69,8 +98,14 @@ export function Header() {
                   end={link.to === '/'}
                   className={({ isActive }) =>
                     cn(
-                      'px-4 py-2 rounded-lg text-sm font-medium transition-colors text-white mix-blend-difference',
-                      isActive ? 'bg-white/20' : 'hover:bg-white/10'
+                      'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                      onDark
+                        ? cn('text-white', isActive ? 'bg-white/20' : 'hover:bg-white/10')
+                        : cn(
+                            isActive
+                              ? 'bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400'
+                              : 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
+                          )
                     )
                   }
                 >
@@ -87,33 +122,32 @@ export function Header() {
             {/* Actions */}
             <div className="flex items-center gap-2">
               {/* Language */}
-              <button onClick={handleLanguageToggle} className={cn(blendBtn, 'flex items-center gap-1 text-sm font-medium')} title="Toggle language">
+              <button onClick={handleLanguageToggle} className={cn(iconBtn, 'flex items-center gap-1 text-sm font-medium')} title="Toggle language">
                 <Globe className="h-4 w-4" />
                 <span className="hidden sm:inline">{language === 'ar' ? 'EN' : 'عر'}</span>
               </button>
 
               {/* Theme */}
-              <button onClick={toggleTheme} className={blendBtn} title="Toggle theme">
+              <button onClick={toggleTheme} className={iconBtn} title="Toggle theme">
                 {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </button>
 
               {/* Favorites */}
               {user && (
-                <Link to="/profile?tab=favorites" className={blendBtn}>
+                <Link to="/profile?tab=favorites" className={iconBtn}>
                   <Heart className="h-4 w-4" />
                 </Link>
               )}
 
               {/* Auth */}
               {user ? (
-                /* Avatar dropdown — isolated from blend mode so it renders normally */
-                <div className="relative isolation-isolate">
+                <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-white/10 transition-colors"
+                    className={cn('flex items-center gap-2 p-1.5 rounded-xl transition-colors', onDark ? 'hover:bg-white/10' : 'hover:bg-dark-100 dark:hover:bg-dark-800')}
                   >
                     <Avatar src={user.avatar_url} name={user.full_name} size="sm" />
-                    <ChevronDown className="h-3 w-3 text-white hidden sm:block" />
+                    <ChevronDown className={cn('h-3 w-3 hidden sm:block', onDark ? 'text-white' : 'text-dark-700 dark:text-dark-200')} />
                   </button>
 
                   <AnimatePresence>
@@ -123,7 +157,6 @@ export function Header() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
                         className="absolute end-0 top-full mt-2 w-52 bg-white dark:bg-dark-800 rounded-xl shadow-2xl border border-dark-100 dark:border-dark-700 overflow-hidden"
-                        style={{ mixBlendMode: 'normal' }}
                       >
                         <div className="p-3 border-b border-dark-100 dark:border-dark-700">
                           <p className="font-semibold text-dark-900 dark:text-dark-100 text-sm truncate">{user.full_name}</p>
@@ -150,26 +183,26 @@ export function Header() {
                 <div className="hidden sm:flex items-center gap-2">
                   <Link
                     to="/auth"
-                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-white mix-blend-difference hover:bg-white/10"
+                    className={cn(
+                      'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                      onDark ? 'text-white hover:bg-white/10' : 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
+                    )}
                   >
                     {t('nav.login')}
                   </Link>
-                  {/* Register button: isolated so primary color stays */}
-                  <div className="isolation-isolate">
-                    <Link
-                      to="/auth?tab=register"
-                      className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500 hover:bg-primary-600 text-white transition-colors"
-                    >
-                      {t('nav.register')}
-                    </Link>
-                  </div>
+                  <Link
+                    to="/auth?tab=register"
+                    className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500 hover:bg-primary-600 text-white transition-colors"
+                  >
+                    {t('nav.register')}
+                  </Link>
                 </div>
               )}
 
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={cn(blendBtn, 'md:hidden')}
+                className={cn(iconBtn, 'md:hidden')}
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>

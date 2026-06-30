@@ -128,6 +128,9 @@ export function HeroSection() {
           <div className="w-1 h-2 bg-white/60 rounded-full" />
         </div>
       </div>
+
+      {/* Marks where the dark hero background ends, so the navbar knows when to switch to light-on-dark icons */}
+      <div id="hero-dark-zone-end" className="absolute bottom-0 inset-x-0 h-px" />
     </section>
   );
 }
