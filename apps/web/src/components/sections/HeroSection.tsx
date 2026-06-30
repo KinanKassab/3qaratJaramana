@@ -22,7 +22,10 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+    <section
+      data-navbar-theme="dark"
+      className="relative min-h-[85vh] flex items-center justify-center overflow-hidden"
+    >
       {/* Background */}
       <div
         className="absolute inset-0 bg-gradient-to-br from-secondary-900 via-secondary-800 to-secondary-700"
@@ -128,9 +131,6 @@ export function HeroSection() {
           <div className="w-1 h-2 bg-white/60 rounded-full" />
         </div>
       </div>
-
-      {/* Marks where the dark hero background ends, so the navbar knows when to switch to light-on-dark icons */}
-      <div id="hero-dark-zone-end" className="absolute bottom-0 inset-x-0 h-px" />
     </section>
   );
 }

@@ -22,25 +22,41 @@ export function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
 
-  // Tracks whether the navbar is currently overlapping a dark hero section,
-  // so icon/text colors can switch reliably — CSS mix-blend-mode silently
-  // fails to blend against page content once the header (position: fixed)
-  // is promoted to its own compositing layer by the browser.
+  // Tracks whether the navbar is currently overlapping a dark-background
+  // section — any element marked data-navbar-theme="dark" (hero banners,
+  // dark CTA sections, the footer, etc). CSS mix-blend-mode silently fails to
+  // blend against page content once the header (position: fixed) is
+  // promoted to its own compositing layer by the browser, so instead we
+  // directly compare the header's rect against each dark section's rect on
+  // scroll and flip an explicit color state.
   const [onDark, setOnDark] = useState(location.pathname === '/');
 
   useEffect(() => {
-    const sentinel = document.getElementById('hero-dark-zone-end');
-    if (!sentinel) {
-      setOnDark(false);
-      return;
-    }
-    const headerHeight = headerRef.current?.offsetHeight ?? 80;
-    const observer = new IntersectionObserver(
-      ([entry]) => setOnDark(entry.isIntersecting),
-      { rootMargin: `-${headerHeight}px 0px 0px 0px`, threshold: 0 }
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
+    let frame = 0;
+
+    const computeOnDark = () => {
+      const headerHeight = headerRef.current?.offsetHeight ?? 80;
+      const darkSections = document.querySelectorAll('[data-navbar-theme="dark"]');
+      const isDark = Array.from(darkSections).some((el) => {
+        const rect = el.getBoundingClientRect();
+        return rect.top < headerHeight && rect.bottom > 0;
+      });
+      setOnDark(isDark);
+    };
+
+    const handleScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(computeOnDark);
+    };
+
+    computeOnDark();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
   }, [location.pathname]);
 
   const handleLanguageToggle = () => {
