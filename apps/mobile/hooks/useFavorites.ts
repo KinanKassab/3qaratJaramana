@@ -1,26 +1,23 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { PropertyWithRelations } from '@shared/types/app.types';
 
 const STORAGE_KEY = 'favorite_property_ids';
 
-function readFavoriteIds(): string[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
+async function readFavoriteIds(): Promise<string[]> {
+  const raw = await AsyncStorage.getItem(STORAGE_KEY);
+  return raw ? (JSON.parse(raw) as string[]) : [];
 }
 
-function writeFavoriteIds(ids: string[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+async function writeFavoriteIds(ids: string[]) {
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
 }
 
 export function useFavoriteIds() {
   return useQuery({
-    queryKey: ['favorite-ids'],
-    queryFn: async () => new Set(readFavoriteIds()),
+    queryKey: ['favorite-ids-mobile'],
+    queryFn: async () => new Set(await readFavoriteIds()),
     staleTime: Infinity,
   });
 }
@@ -29,17 +26,13 @@ export function useFavorites() {
   const { data: favoriteIds } = useFavoriteIds();
 
   return useQuery({
-    queryKey: ['favorites', favoriteIds ? Array.from(favoriteIds).sort() : []],
+    queryKey: ['favorites-mobile', favoriteIds ? Array.from(favoriteIds).sort() : []],
     queryFn: async () => {
       const ids = Array.from(favoriteIds ?? []);
       if (ids.length === 0) return [];
       const { data, error } = await supabase
         .from('properties')
-        .select(
-          `*, category:categories(*), location:locations(*),
-           images:property_images(id, url, is_cover, sort_order),
-           agent:users!properties_agent_id_fkey(id, full_name, phone)`
-        )
+        .select(`*, images:property_images(*), location:locations(name_ar, name_en)`)
         .in('id', ids);
       if (error) throw error;
       return (data as PropertyWithRelations[]) ?? [];
@@ -53,15 +46,15 @@ export function useToggleFavorite() {
 
   return useMutation({
     mutationFn: async ({ propertyId, isFavorite }: { propertyId: string; isFavorite: boolean }) => {
-      const ids = new Set(readFavoriteIds());
+      const ids = new Set(await readFavoriteIds());
       if (isFavorite) ids.delete(propertyId);
       else ids.add(propertyId);
-      writeFavoriteIds(Array.from(ids));
+      await writeFavoriteIds(Array.from(ids));
       return ids;
     },
     onSuccess: (ids) => {
-      queryClient.setQueryData(['favorite-ids'], ids);
-      queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      queryClient.setQueryData(['favorite-ids-mobile'], ids);
+      queryClient.invalidateQueries({ queryKey: ['favorites-mobile'] });
     },
   });
 }

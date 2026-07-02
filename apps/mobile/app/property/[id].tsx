@@ -11,7 +11,7 @@ import {
   Share2, Heart, ArrowLeft,
 } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/stores/authStore';
+import { useFavoriteIds, useToggleFavorite } from '@/hooks/useFavorites';
 import { useUIStore } from '@/stores/uiStore';
 import { formatPrice, formatArea, getLocalizedText } from '@shared/utils/format';
 import { buildWhatsAppContactLink } from '@shared/utils/whatsapp';
@@ -20,10 +20,10 @@ import type { PropertyWithRelations } from '@shared/types/app.types';
 export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useAuthStore();
   const { language } = useUIStore();
   const isAr = language === 'ar';
-  const [isFavorited, setIsFavorited] = useState(false);
+  const { data: favoriteIds } = useFavoriteIds();
+  const { mutate: toggleFavoriteMutation } = useToggleFavorite();
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
 
   const { data: property, isLoading } = useQuery({
@@ -49,14 +49,11 @@ export default function PropertyDetailScreen() {
     enabled: !!id,
   });
 
-  const toggleFavorite = async () => {
-    if (!user || !property) return;
-    if (isFavorited) {
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('property_id', property.id);
-    } else {
-      await supabase.from('favorites').insert({ user_id: user.id, property_id: property.id });
-    }
-    setIsFavorited(!isFavorited);
+  const isFavorited = property ? (favoriteIds?.has(property.id) ?? false) : false;
+
+  const toggleFavorite = () => {
+    if (!property) return;
+    toggleFavoriteMutation({ propertyId: property.id, isFavorite: isFavorited });
   };
 
   const handleShare = async () => {

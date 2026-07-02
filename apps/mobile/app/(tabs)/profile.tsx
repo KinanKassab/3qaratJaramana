@@ -1,31 +1,19 @@
 import React from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, Linking,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { applyRTL } from '@/utils/rtl';
+import { buildWhatsAppContactLink } from '@shared/utils/whatsapp';
 import {
-  User, Heart, Calendar, Bell, Globe, Moon, Sun, LogOut, ChevronRight,
+  Globe, Moon, Sun, Phone, MessageCircle, ChevronRight,
 } from 'lucide-react-native';
 
-export default function ProfileScreen() {
-  const router = useRouter();
-  const { user, logout } = useAuthStore();
+const CONTACT_PHONE = '+963112345678';
+
+export default function SettingsScreen() {
   const { language, theme, setLanguage, setTheme } = useUIStore();
   const isAr = language === 'ar';
-
-  const handleLogout = () => {
-    Alert.alert(
-      isAr ? 'تسجيل الخروج' : 'Log Out',
-      isAr ? 'هل أنت متأكد؟' : 'Are you sure?',
-      [
-        { text: isAr ? 'إلغاء' : 'Cancel', style: 'cancel' },
-        { text: isAr ? 'خروج' : 'Log Out', onPress: logout, style: 'destructive' },
-      ],
-    );
-  };
 
   const handleLanguageToggle = async () => {
     const newLang: 'ar' | 'en' = language === 'ar' ? 'en' : 'ar';
@@ -33,39 +21,30 @@ export default function ProfileScreen() {
     await applyRTL(newLang);
   };
 
-  if (!user) {
-    return (
-      <View style={styles.centered}>
-        <User size={56} color="#dee2e6" />
-        <Text style={styles.emptyText}>{isAr ? 'سجل دخولك لعرض ملفك الشخصي' : 'Login to view your profile'}</Text>
-        <TouchableOpacity style={styles.loginBtn} onPress={() => router.push('/auth/login')}>
-          <Text style={styles.loginBtnText}>{isAr ? 'تسجيل الدخول' : 'Log In'}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/auth/register')} style={{ marginTop: 12 }}>
-          <Text style={styles.registerText}>{isAr ? 'إنشاء حساب جديد' : 'Create Account'}</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   const menuItems = [
-    { icon: Heart, label: isAr ? 'المفضلة' : 'Favorites', onPress: () => router.push('/(tabs)/favorites') },
-    { icon: Calendar, label: isAr ? 'مواعيدي' : 'My Appointments', onPress: () => router.push('/appointments') },
-    { icon: Bell, label: isAr ? 'الإشعارات' : 'Notifications', onPress: () => router.push('/notifications') },
+    {
+      icon: Phone,
+      label: isAr ? 'اتصل بنا' : 'Call Us',
+      onPress: () => Linking.openURL(`tel:${CONTACT_PHONE}`),
+    },
+    {
+      icon: MessageCircle,
+      label: isAr ? 'راسلنا واتساب' : 'WhatsApp Us',
+      onPress: () => Linking.openURL(buildWhatsAppContactLink(CONTACT_PHONE)),
+    },
   ];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      {/* Profile header */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{user.full_name?.[0] ?? 'U'}</Text>
+          <Text style={styles.avatarText}>ع</Text>
         </View>
-        <Text style={styles.name}>{user.full_name}</Text>
-        <Text style={styles.email}>{user.email}</Text>
+        <Text style={styles.name}>{isAr ? 'عقارات جرمانا' : '3qarat Jaramana'}</Text>
       </View>
 
-      {/* Menu */}
+      {/* Contact */}
       <View style={styles.section}>
         {menuItems.map((item) => (
           <TouchableOpacity key={item.label} style={styles.menuItem} onPress={item.onPress}>
@@ -89,30 +68,17 @@ export default function ProfileScreen() {
           <ChevronRight size={16} color="#adb5bd" />
         </TouchableOpacity>
       </View>
-
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <LogOut size={18} color="#ef4444" />
-        <Text style={styles.logoutText}>{isAr ? 'تسجيل الخروج' : 'Log Out'}</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { color: '#6c757d', marginTop: 12, fontSize: 15, textAlign: 'center' },
-  loginBtn: { marginTop: 20, backgroundColor: '#C4A35A', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 14 },
-  loginBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  registerText: { color: '#1B3A5C', fontSize: 14, fontWeight: '600' },
   header: { backgroundColor: '#1B3A5C', alignItems: 'center', paddingTop: 40, paddingBottom: 32 },
   avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#C4A35A', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   avatarText: { fontSize: 28, fontWeight: '800', color: '#fff' },
   name: { fontSize: 18, fontWeight: '700', color: '#fff', marginBottom: 4 },
-  email: { fontSize: 13, color: '#b8c5d1' },
   section: { backgroundColor: '#fff', marginHorizontal: 16, marginTop: 16, borderRadius: 16, overflow: 'hidden' },
   menuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f1f3f5' },
   menuLabel: { flex: 1, fontSize: 14, fontWeight: '500', color: '#212529' },
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 16, marginTop: 24, padding: 14, backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#fecaca' },
-  logoutText: { fontSize: 14, fontWeight: '600', color: '#ef4444' },
 });

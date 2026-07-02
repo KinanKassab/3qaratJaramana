@@ -3,43 +3,17 @@ import {
   View, Text, FlatList, TouchableOpacity, Image, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import { Heart } from 'lucide-react-native';
-import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/stores/authStore';
+import { useFavorites } from '@/hooks/useFavorites';
 import { useUIStore } from '@/stores/uiStore';
 import { formatPrice, getLocalizedText } from '@shared/utils/format';
 
 export default function FavoritesScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
   const { language } = useUIStore();
   const isAr = language === 'ar';
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['favorites-mobile', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase
-        .from('favorites')
-        .select(`property:properties(*, images:property_images(*), location:locations(name_ar, name_en))`)
-        .eq('user_id', user.id);
-      return (data?.map((f: any) => f.property) ?? []);
-    },
-    enabled: !!user,
-  });
-
-  if (!user) {
-    return (
-      <View style={styles.centered}>
-        <Heart size={48} color="#dee2e6" />
-        <Text style={styles.emptyText}>{isAr ? 'سجل دخولك لرؤية المفضلة' : 'Login to see favorites'}</Text>
-        <TouchableOpacity style={styles.loginBtn} onPress={() => router.push('/auth/login')}>
-          <Text style={styles.loginBtnText}>{isAr ? 'تسجيل الدخول' : 'Log In'}</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const { data, isLoading } = useFavorites();
 
   if (isLoading) return <ActivityIndicator color="#C4A35A" style={{ marginTop: 40 }} />;
 
@@ -78,8 +52,6 @@ export default function FavoritesScreen() {
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   emptyText: { color: '#6c757d', marginTop: 12, fontSize: 15 },
-  loginBtn: { marginTop: 16, backgroundColor: '#C4A35A', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 12 },
-  loginBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   card: {
     flexDirection: 'row',
     backgroundColor: '#fff',

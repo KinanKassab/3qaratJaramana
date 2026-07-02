@@ -1,25 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Menu, X, Sun, Moon, Globe, Heart,
-  LogOut, User, ChevronDown, LayoutDashboard
-} from 'lucide-react';
-import { useAuthStore } from '@/stores/authStore';
+import { Menu, X, Sun, Moon, Globe, Heart } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore';
 import { useComparisonStore } from '@/stores/comparisonStore';
-import { Avatar } from '@/components/ui/Avatar';
 import { cn } from '@/lib/cn';
 
 export function Header() {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuthStore();
   const { theme, language, toggleTheme, setLanguage, mobileMenuOpen, setMobileMenuOpen } = useUIStore();
   const { items: comparisonItems } = useComparisonStore();
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
 
   // Tracks whether the navbar is currently overlapping a dark-background
@@ -63,12 +55,6 @@ export function Header() {
     const newLang = language === 'ar' ? 'en' : 'ar';
     setLanguage(newLang);
     i18n.changeLanguage(newLang);
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    setUserMenuOpen(false);
-    navigate('/');
   };
 
   const navLinks = [
@@ -149,71 +135,9 @@ export function Header() {
               </button>
 
               {/* Favorites */}
-              {user && (
-                <Link to="/profile?tab=favorites" className={iconBtn}>
-                  <Heart className="h-4 w-4" />
-                </Link>
-              )}
-
-              {/* Auth */}
-              {user ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className={cn('flex items-center gap-2 p-1.5 rounded-xl transition-colors', onDark ? 'hover:bg-white/10' : 'hover:bg-dark-100 dark:hover:bg-dark-800')}
-                  >
-                    <Avatar src={user.avatar_url} name={user.full_name} size="sm" />
-                    <ChevronDown className={cn('h-3 w-3 hidden sm:block', onDark ? 'text-white' : 'text-dark-700 dark:text-dark-200')} />
-                  </button>
-
-                  <AnimatePresence>
-                    {userMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                        className="absolute end-0 top-full mt-2 w-52 bg-white dark:bg-dark-800 rounded-xl shadow-2xl border border-dark-100 dark:border-dark-700 overflow-hidden"
-                      >
-                        <div className="p-3 border-b border-dark-100 dark:border-dark-700">
-                          <p className="font-semibold text-dark-900 dark:text-dark-100 text-sm truncate">{user.full_name}</p>
-                          <p className="text-xs text-dark-500 truncate capitalize">{user.role}</p>
-                        </div>
-                        <div className="py-1">
-                          <Link to="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700">
-                            <User className="h-4 w-4" /> {t('profile.title')}
-                          </Link>
-                          {(user.role === 'admin' || user.role === 'agent') && (
-                            <Link to="/admin" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700">
-                              <LayoutDashboard className="h-4 w-4" /> {t('nav.admin')}
-                            </Link>
-                          )}
-                          <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 w-full">
-                            <LogOut className="h-4 w-4" /> {t('nav.logout')}
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <div className="hidden sm:flex items-center gap-2">
-                  <Link
-                    to="/auth"
-                    className={cn(
-                      'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                      onDark ? 'text-white hover:bg-white/10' : 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800'
-                    )}
-                  >
-                    {t('nav.login')}
-                  </Link>
-                  <Link
-                    to="/auth?tab=register"
-                    className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500 hover:bg-primary-600 text-white transition-colors"
-                  >
-                    {t('nav.register')}
-                  </Link>
-                </div>
-              )}
+              <Link to="/favorites" className={iconBtn}>
+                <Heart className="h-4 w-4" />
+              </Link>
 
               {/* Mobile menu button */}
               <button
@@ -271,17 +195,6 @@ export function Header() {
                   </NavLink>
                 ))}
               </nav>
-
-              {!user && (
-                <div className="mt-6 space-y-3">
-                  <Link to="/auth" onClick={() => setMobileMenuOpen(false)} className="block btn-outline text-center">
-                    {t('nav.login')}
-                  </Link>
-                  <Link to="/auth?tab=register" onClick={() => setMobileMenuOpen(false)} className="block btn-primary text-center">
-                    {t('nav.register')}
-                  </Link>
-                </div>
-              )}
             </div>
           </motion.div>
         )}

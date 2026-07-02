@@ -7,8 +7,7 @@ const HomePage = lazy(() => import('@/pages/HomePage').then(m => ({ default: m.H
 const PropertiesPage = lazy(() => import('@/pages/PropertiesPage').then(m => ({ default: m.PropertiesPage })));
 const PropertyDetailPage = lazy(() => import('@/pages/PropertyDetailPage').then(m => ({ default: m.PropertyDetailPage })));
 const ComparisonPage = lazy(() => import('@/pages/ComparisonPage').then(m => ({ default: m.ComparisonPage })));
-const AuthPage = lazy(() => import('@/pages/AuthPage').then(m => ({ default: m.AuthPage })));
-const ProfilePage = lazy(() => import('@/pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const FavoritesPage = lazy(() => import('@/pages/FavoritesPage').then(m => ({ default: m.FavoritesPage })));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
 export default function App() {
@@ -21,8 +20,7 @@ export default function App() {
             <Route path="/properties" element={<PropertiesPage />} />
             <Route path="/property/:slug" element={<PropertyDetailPage />} />
             <Route path="/compare" element={<ComparisonPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

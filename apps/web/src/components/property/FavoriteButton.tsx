@@ -1,8 +1,5 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { useAuthStore } from '@/stores/authStore';
 import { useFavoriteIds, useToggleFavorite } from '@/hooks/useFavorites';
 import { cn } from '@/lib/cn';
 
@@ -13,8 +10,6 @@ interface FavoriteButtonProps {
 }
 
 export function FavoriteButton({ propertyId, className, size = 'sm' }: FavoriteButtonProps) {
-  const { user } = useAuthStore();
-  const navigate = useNavigate();
   const { data: favoriteIds } = useFavoriteIds();
   const { mutate: toggle, isPending } = useToggleFavorite();
 
@@ -23,13 +18,6 @@ export function FavoriteButton({ propertyId, className, size = 'sm' }: FavoriteB
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    if (!user) {
-      toast.error('يرجى تسجيل الدخول أولاً');
-      navigate('/auth');
-      return;
-    }
-
     toggle({ propertyId, isFavorite });
   };
 

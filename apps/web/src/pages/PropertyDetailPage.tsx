@@ -6,7 +6,6 @@ import {
   Share2, Calendar, Building2, Eye
 } from 'lucide-react';
 import { useProperty } from '@/hooks/useProperties';
-import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { supabase } from '@/lib/supabase';
 import { formatPrice, formatArea, formatDate, getLocalizedText } from '@shared/utils/format';
@@ -16,11 +15,9 @@ import { PropertyImageSlider } from '@/components/property/PropertyImageSlider';
 import { PropertyVideoPlayer } from '@/components/property/PropertyVideoPlayer';
 import { AmenitiesGrid } from '@/components/property/AmenitiesGrid';
 import { PropertyShare } from '@/components/property/PropertyShare';
-import { AppointmentBooking } from '@/components/property/AppointmentBooking';
 import { FavoriteButton } from '@/components/property/FavoriteButton';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
-import { Modal } from '@/components/ui/Modal';
 import { Tabs, TabList, Tab, TabPanel } from '@/components/ui/Tabs';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Spinner } from '@/components/ui/Spinner';
@@ -31,9 +28,7 @@ export function PropertyDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { t } = useTranslation();
   const { language } = useUIStore();
-  const { user } = useAuthStore();
   const { data: property, isLoading, isError } = useProperty(slug ?? '');
-  const [appointmentOpen, setAppointmentOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
   // Track view
@@ -49,7 +44,7 @@ export function PropertyDetailPage() {
     supabase.rpc('increment_view_count', { p_property_id: property.id }).then(() => {});
     supabase.from('property_views').insert({
       property_id: property.id,
-      user_id: user?.id ?? null,
+      user_id: null,
       session_id: sessionId,
     }).then(() => {});
   }, [property?.id]);
@@ -95,6 +90,10 @@ export function PropertyDetailPage() {
 
   const agentWhatsApp = property.agent?.phone
     ? buildWhatsAppContactLink(property.agent.phone, `أريد الاستفسار عن: ${title}`)
+    : null;
+
+  const previewWhatsApp = property.agent?.phone
+    ? buildWhatsAppContactLink(property.agent.phone, `أريد حجز معاينة للعقار: ${title}`)
     : null;
 
   return (
@@ -303,13 +302,17 @@ export function PropertyDetailPage() {
                     </a>
                   )}
 
-                  <button
-                    onClick={() => setAppointmentOpen(true)}
-                    className="btn-outline w-full justify-center gap-2 py-3"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    {t('property.book_appointment')}
-                  </button>
+                  {previewWhatsApp && (
+                    <a
+                      href={previewWhatsApp}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-outline w-full justify-center gap-2 py-3"
+                    >
+                      <Calendar className="h-4 w-4" />
+                      {t('property.book_appointment')}
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -339,34 +342,18 @@ export function PropertyDetailPage() {
             WhatsApp
           </a>
         )}
-        <button
-          onClick={() => setAppointmentOpen(true)}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-500 text-white text-sm font-semibold"
-        >
-          <Calendar className="h-4 w-4" />
-          {t('property.book_appointment')}
-        </button>
-      </div>
-
-      {/* Appointment Modal */}
-      <Modal
-        isOpen={appointmentOpen}
-        onClose={() => setAppointmentOpen(false)}
-        title={t('appointment.title')}
-      >
-        {user ? (
-          <AppointmentBooking
-            propertyId={property.id}
-            agentId={property.agent_id}
-            onSuccess={() => setAppointmentOpen(false)}
-          />
-        ) : (
-          <div className="text-center py-6">
-            <p className="text-dark-600 mb-4">{t('errors.unauthorized')}</p>
-            <Link to="/auth" className="btn-primary">{t('nav.login')}</Link>
-          </div>
+        {previewWhatsApp && (
+          <a
+            href={previewWhatsApp}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-500 text-white text-sm font-semibold"
+          >
+            <Calendar className="h-4 w-4" />
+            {t('property.book_appointment')}
+          </a>
         )}
-      </Modal>
+      </div>
     </>
   );
 }

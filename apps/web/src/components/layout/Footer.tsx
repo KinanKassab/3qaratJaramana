@@ -64,7 +64,7 @@ export function Footer() {
                 { to: '/', label: t('nav.home') },
                 { to: '/properties', label: t('nav.properties') },
                 { to: '/compare', label: t('nav.compare') },
-                { to: '/auth', label: t('nav.login') },
+                { to: '/favorites', label: t('nav.favorites') },
               ].map((link) => (
                 <li key={link.to}>
                   <Link

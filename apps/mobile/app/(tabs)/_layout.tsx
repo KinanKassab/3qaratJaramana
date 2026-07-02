@@ -49,7 +49,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: isAr ? 'حسابي' : 'Profile',
+          title: isAr ? 'الإعدادات' : 'Settings',
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
