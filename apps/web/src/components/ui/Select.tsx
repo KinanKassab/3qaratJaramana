@@ -14,15 +14,10 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   placeholder?: string;
 }
 
-export function Select({
-  label,
-  error,
-  options,
-  placeholder,
-  className,
-  id,
-  ...props
-}: SelectProps) {
+export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(function Select(
+  { label, error, options, placeholder, className, id, ...props },
+  ref
+) {
   const selectId = id ?? label?.toLowerCase().replace(/\s+/g, '-');
 
   return (
@@ -37,6 +32,7 @@ export function Select({
       )}
       <div className="relative">
         <select
+          ref={ref}
           id={selectId}
           className={cn(
             'input-base appearance-none pe-10 cursor-pointer',
@@ -63,4 +59,4 @@ export function Select({
       {error && <p className="mt-1.5 text-sm text-red-500">{error}</p>}
     </div>
   );
-}
+});

@@ -43,6 +43,18 @@ export function AuthPage() {
     if (user && tab !== 'reset') navigate(from, { replace: true });
   }, [user, navigate, from, tab]);
 
+  // Keep the active tab in sync with the URL (e.g. clicking "Register" in the
+  // navbar while already on /auth only changes the query string, which does
+  // not remount this component or re-run the initial useState lazy init).
+  useEffect(() => {
+    const p = searchParams.get('tab');
+    if (p === 'register' || p === 'forgot' || p === 'reset') {
+      setTab(p);
+    } else if (p === null) {
+      setTab('login');
+    }
+  }, [searchParams]);
+
   // Listen for PASSWORD_RECOVERY event from Supabase (fired when user clicks reset link)
   useEffect(() => {
     let cleanup: (() => void) | null = null;
@@ -134,7 +146,6 @@ export function AuthPage() {
   const visibleTabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: 'login', label: t('nav.login'), icon: LogIn },
     { id: 'register', label: t('nav.register'), icon: UserPlus },
-    { id: 'forgot', label: language === 'ar' ? 'نسيت كلمة المرور' : 'Forgot Password', icon: KeyRound },
   ];
 
   return (
@@ -153,9 +164,9 @@ export function AuthPage() {
             </Link>
           </div>
 
-          <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-card p-8">
-            {/* Tabs — hidden when on reset tab */}
-            {tab !== 'reset' && (
+          <div className="bg-white dark:bg-dark-800 border border-dark-100 dark:border-dark-700 rounded-2xl shadow-card p-8">
+            {/* Tabs — hidden on the forgot/reset password screens */}
+            {(tab === 'login' || tab === 'register') && (
               <div className="flex gap-1 mb-8 bg-dark-100 dark:bg-dark-700 rounded-xl p-1">
                 {visibleTabs.map((vt) => (
                   <button
@@ -165,7 +176,7 @@ export function AuthPage() {
                       flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all
                       ${tab === vt.id
                         ? 'bg-white dark:bg-dark-600 text-dark-900 dark:text-dark-100 shadow-sm'
-                        : 'text-dark-500 dark:text-dark-400 hover:text-dark-700'
+                        : 'text-dark-600 dark:text-dark-300 hover:text-dark-800 dark:hover:text-dark-100'
                       }
                     `}
                   >
@@ -222,6 +233,15 @@ export function AuthPage() {
                   {loginForm.formState.errors.password && (
                     <p className="text-red-500 text-xs mt-1">{loginForm.formState.errors.password.message}</p>
                   )}
+                  <div className="text-end mt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => { setTab('forgot'); setError(''); }}
+                      className="text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium"
+                    >
+                      {language === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+                    </button>
+                  </div>
                 </div>
 
                 <button
@@ -340,49 +360,58 @@ export function AuthPage() {
 
             {/* Forgot Password */}
             {tab === 'forgot' && (
-              forgotSent ? (
-                <div className="text-center py-4">
-                  <div className="w-16 h-16 bg-primary-100 dark:bg-primary-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <KeyRound className="h-8 w-8 text-primary-500" />
+              <>
+                <button
+                  type="button"
+                  onClick={() => { setTab('login'); setError(''); }}
+                  className="text-sm text-dark-600 dark:text-dark-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium mb-4"
+                >
+                  {language === 'ar' ? '→ العودة لتسجيل الدخول' : '← Back to login'}
+                </button>
+                {forgotSent ? (
+                  <div className="text-center py-4">
+                    <div className="w-16 h-16 bg-primary-100 dark:bg-primary-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <KeyRound className="h-8 w-8 text-primary-500" />
+                    </div>
+                    <h3 className="font-bold text-dark-900 dark:text-dark-100 mb-2">
+                      {language === 'ar' ? 'تم إرسال الرابط' : 'Link Sent'}
+                    </h3>
+                    <p className="text-dark-500 text-sm">
+                      {language === 'ar'
+                        ? `تحقق من بريدك الإلكتروني ${forgotEmail} للحصول على رابط إعادة التعيين`
+                        : `Check ${forgotEmail} for the reset link`}
+                    </p>
                   </div>
-                  <h3 className="font-bold text-dark-900 dark:text-dark-100 mb-2">
-                    {language === 'ar' ? 'تم إرسال الرابط' : 'Link Sent'}
-                  </h3>
-                  <p className="text-dark-500 text-sm">
-                    {language === 'ar'
-                      ? `تحقق من بريدك الإلكتروني ${forgotEmail} للحصول على رابط إعادة التعيين`
-                      : `Check ${forgotEmail} for the reset link`}
-                  </p>
-                </div>
-              ) : (
-                <form onSubmit={handleForgotPassword} className="space-y-4">
-                  <p className="text-dark-500 dark:text-dark-400 text-sm mb-4">
-                    {language === 'ar'
-                      ? 'أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة المرور'
-                      : "Enter your email and we'll send you a password reset link"}
-                  </p>
-                  <div>
-                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1.5">
-                      {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
-                    </label>
-                    <input
-                      type="email"
-                      value={forgotEmail}
-                      onChange={(e) => setForgotEmail(e.target.value)}
-                      className="input-base"
-                      dir="ltr"
-                      required
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="btn-primary w-full justify-center py-3"
-                  >
-                    {loading ? <Spinner size="sm" /> : (language === 'ar' ? 'إرسال الرابط' : 'Send Reset Link')}
-                  </button>
-                </form>
-              )
+                ) : (
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <p className="text-dark-500 dark:text-dark-400 text-sm mb-4">
+                      {language === 'ar'
+                        ? 'أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة المرور'
+                        : "Enter your email and we'll send you a password reset link"}
+                    </p>
+                    <div>
+                      <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1.5">
+                        {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                      </label>
+                      <input
+                        type="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        className="input-base"
+                        dir="ltr"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="btn-primary w-full justify-center py-3"
+                    >
+                      {loading ? <Spinner size="sm" /> : (language === 'ar' ? 'إرسال الرابط' : 'Send Reset Link')}
+                    </button>
+                  </form>
+                )}
+              </>
             )}
 
             {/* Reset Password (after clicking email link) */}

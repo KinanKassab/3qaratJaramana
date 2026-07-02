@@ -60,6 +60,11 @@ credentials.json
 *.local
 coverage/
 
-# Vercel (keep project.json for CI linking, ignore local env overrides)
-.vercel/.vercel_env_*
-.vercel/output/
+# Vercel
+.vercel/
+
+# Claude
+.claude/
+
+# GitHub
+.github/

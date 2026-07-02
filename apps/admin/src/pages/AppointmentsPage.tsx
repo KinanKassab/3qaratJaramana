@@ -30,7 +30,7 @@ export function AppointmentsPage() {
       let query = supabase
         .from('appointments')
         .select(`
-          id, requester_name, requester_phone, scheduled_at, status, notes, created_at,
+          id, user_id, requester_name, requester_phone, scheduled_at, status, notes, created_at,
           property:properties(id, title_ar, title_en, slug),
           agent:users!appointments_agent_id_fkey(full_name)
         `, { count: 'exact' });
@@ -46,8 +46,27 @@ export function AppointmentsPage() {
   });
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status, userId, propertyTitle }: { id: string; status: string; userId: string | null; propertyTitle: string }) => {
       await supabase.from('appointments').update({ status }).eq('id', id);
+
+      if (userId) {
+        const sc = statusConfig[status];
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            user_ids: [userId],
+            type: 'appointment_status',
+            title_ar: `تحديث حالة الموعد: ${sc.ar}`,
+            title_en: `Appointment update: ${sc.en}`,
+            body_ar: propertyTitle
+              ? `موعدك بخصوص "${propertyTitle}" أصبحت حالته: ${sc.ar}`
+              : `أصبحت حالة موعدك: ${sc.ar}`,
+            body_en: propertyTitle
+              ? `Your appointment for "${propertyTitle}" is now: ${sc.en}`
+              : `Your appointment status is now: ${sc.en}`,
+            data: { appointment_id: id, status },
+          },
+        });
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-appointments'] }),
   });
@@ -138,7 +157,12 @@ export function AppointmentsPage() {
                       <td className="table-cell">
                         <select
                           value={a.status}
-                          onChange={(e) => updateStatus.mutate({ id: a.id, status: e.target.value })}
+                          onChange={(e) => updateStatus.mutate({
+                            id: a.id,
+                            status: e.target.value,
+                            userId: a.user_id ?? null,
+                            propertyTitle: a.property ? getLocalizedText(a.property.title_ar, a.property.title_en, language) : '',
+                          })}
                           className="text-xs border border-dark-200 dark:border-dark-600 rounded-lg px-2 py-1 bg-transparent"
                         >
                           {Object.entries(statusConfig).map(([k, v]) => (
