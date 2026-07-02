@@ -15,6 +15,7 @@ import { useFavoriteIds, useToggleFavorite } from '@/hooks/useFavorites';
 import { useUIStore } from '@/stores/uiStore';
 import { formatPrice, formatArea, getLocalizedText } from '@shared/utils/format';
 import { buildWhatsAppContactLink } from '@shared/utils/whatsapp';
+import { CONTACT_PHONE } from '@shared/utils/constants';
 import type { PropertyWithRelations } from '@shared/types/app.types';
 
 export default function PropertyDetailScreen() {
@@ -68,9 +69,9 @@ export default function PropertyDetailScreen() {
   };
 
   const handleWhatsApp = async () => {
-    if (!property?.agent?.phone) return;
+    if (!property) return;
     const title = getLocalizedText(property.title_ar, property.title_en, language);
-    const url = buildWhatsAppContactLink(property.agent.phone, `أريد الاستفسار عن: ${title}`);
+    const url = buildWhatsAppContactLink(property.agent?.phone ?? CONTACT_PHONE, `أريد الاستفسار عن: ${title}`);
     await supabase.rpc('increment_analytics', {
       p_property_id: property.id,
       p_event_type: 'whatsapp_click',
@@ -184,15 +185,13 @@ export default function PropertyDetailScreen() {
 
       {/* Contact CTA */}
       <View style={styles.cta}>
-        {property.agent?.phone && (
-          <TouchableOpacity
-            style={[styles.ctaBtn, styles.ctaBtnPhone]}
-            onPress={() => Linking.openURL(`tel:${property.agent!.phone}`)}
-          >
-            <Phone size={18} color="#fff" />
-            <Text style={styles.ctaBtnText}>{isAr ? 'اتصل' : 'Call'}</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={[styles.ctaBtn, styles.ctaBtnPhone]}
+          onPress={() => Linking.openURL(`tel:${property.agent?.phone ?? CONTACT_PHONE}`)}
+        >
+          <Phone size={18} color="#fff" />
+          <Text style={styles.ctaBtnText}>{isAr ? 'اتصل' : 'Call'}</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={[styles.ctaBtn, styles.ctaBtnWhatsApp]} onPress={handleWhatsApp}>
           <MessageCircle size={18} color="#fff" />
           <Text style={styles.ctaBtnText}>WhatsApp</Text>

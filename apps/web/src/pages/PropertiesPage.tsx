@@ -32,8 +32,8 @@ export function PropertiesPage() {
       <SEO
         title={language === 'ar' ? 'جميع العقارات' : 'All Properties'}
         description={language === 'ar'
-          ? 'تصفح جميع العقارات المتاحة للبيع والإيجار في جرمانا ودمشق'
-          : 'Browse all properties for sale and rent in Jaramana and Damascus'}
+          ? 'تصفح جميع العقارات المتاحة للبيع والإيجار في جرمانا'
+          : 'Browse all properties for sale and rent in Jaramana'}
         url="/properties"
       />
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Phone, Mail, MapPin, Facebook, Instagram, Youtube } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore';
+import { CONTACT_PHONE, CONTACT_PHONE_DISPLAY } from '@shared/utils/constants';
 
 export function Footer() {
   const { t } = useTranslation();
@@ -29,8 +30,8 @@ export function Footer() {
             </div>
             <p className="text-dark-300 text-sm leading-relaxed">
               {language === 'ar'
-                ? 'منصتك الأولى للبحث عن العقارات في جرمانا ودمشق وريف دمشق'
-                : 'Your #1 platform for real estate in Jaramana, Damascus & Rif Dimashq'}
+                ? 'منصتك الأولى للبحث عن العقارات في جرمانا'
+                : 'Your #1 platform for real estate in Jaramana'}
             </p>
             <div className="flex items-center gap-3 mt-5">
               <a
@@ -118,8 +119,8 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-4 w-4 text-primary-400 flex-shrink-0" />
-                <a href="tel:+963112345678" className="text-dark-300 hover:text-primary-400 text-sm transition-colors" dir="ltr">
-                  +963 11 234 5678
+                <a href={`tel:${CONTACT_PHONE}`} className="text-dark-300 hover:text-primary-400 text-sm transition-colors" dir="ltr">
+                  {CONTACT_PHONE_DISPLAY}
                 </a>
               </li>
               <li className="flex items-center gap-3">

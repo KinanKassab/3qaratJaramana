@@ -83,8 +83,8 @@ export function PropertyCard({ property, className, index = 0 }: PropertyCardPro
           <div className="text-xl font-bold text-primary-600 dark:text-primary-400" dir="ltr">
             {formatPrice(property.price, language, 'SYP', property.price_period)}
           </div>
-          <div className="flex items-center gap-1">
-            {/* Compare button */}
+          <div className="flex items-center gap-1.5">
+            {/* Compare button — labeled pill so visitors discover the feature */}
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -95,14 +95,15 @@ export function PropertyCard({ property, className, index = 0 }: PropertyCardPro
                 }
               }}
               className={cn(
-                'p-1.5 rounded-lg transition-colors',
+                'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors',
                 inComparison
-                  ? 'text-primary-600 bg-primary-50 dark:bg-primary-950/30'
-                  : 'text-dark-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/30'
+                  ? 'text-white bg-primary-500 border-primary-500'
+                  : 'text-dark-500 dark:text-dark-400 border-dark-200 dark:border-dark-600 hover:text-primary-600 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30'
               )}
               title={inComparison ? t('property.remove_from_compare') : t('property.add_to_compare')}
             >
-              <Scale className="h-4 w-4" />
+              <Scale className="h-3.5 w-3.5" />
+              {inComparison ? t('property.compare_added') : t('property.compare')}
             </button>
 
             {/* Favorite button */}

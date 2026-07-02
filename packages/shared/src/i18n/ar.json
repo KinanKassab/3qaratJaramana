@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "عقارات جرمانا",
-    "tagline": "ابحث عن منزل أحلامك في جرمانا ودمشق"
+    "tagline": "ابحث عن منزل أحلامك في جرمانا"
   },
   "nav": {
     "home": "الرئيسية",
@@ -17,14 +17,14 @@
   },
   "home": {
     "hero": {
-      "title": "اعثر على عقارك المثالي",
-      "subtitle": "آلاف العقارات في جرمانا ودمشق وريف دمشق",
-      "search_placeholder": "ابحث عن موقع أو حي...",
+      "title": "اعثر على عقارك المثالي في جرمانا",
+      "subtitle": "أفضل العقارات للبيع والإيجار في جرمانا وأحيائها",
+      "search_placeholder": "ابحث عن حي أو عقار في جرمانا...",
       "search_button": "بحث"
     },
     "featured": "عقارات مميزة",
     "latest": "أحدث العقارات",
-    "popular_locations": "المناطق الشعبية",
+    "popular_locations": "الأحياء الأكثر شعبية",
     "why_us": "لماذا تختارنا؟",
     "testimonials": "آراء العملاء",
     "contact": "تواصل معنا"
@@ -54,7 +54,9 @@
     "whatsapp": "واتساب",
     "qr_code": "رمز QR",
     "book_appointment": "حجز معاينة",
-    "add_to_compare": "إضافة للمقارنة",
+    "compare": "قارن",
+    "compare_added": "بالمقارنة",
+    "add_to_compare": "أضف هذا العقار للمقارنة مع عقارات أخرى",
     "remove_from_compare": "إزالة من المقارنة",
     "add_to_favorites": "إضافة للمفضلة",
     "remove_from_favorites": "إزالة من المفضلة",
@@ -94,17 +96,20 @@
     "all_locations": "جميع المناطق",
     "select_city": "اختر المدينة",
     "select_district": "اختر الحي",
+    "district": "الحي",
+    "all_districts": "كل الأحياء",
     "price_range": "نطاق السعر",
+    "custom": "مخصص",
     "area_range": "نطاق المساحة",
-    "bedrooms": "غرف النوم",
+    "bedrooms": "غرف النوم مع صالون",
     "bathrooms": "دورات المياه",
     "any": "أي عدد",
     "featured_only": "المميزة فقط",
     "sort_by": "ترتيب حسب",
     "newest": "الأحدث",
     "oldest": "الأقدم",
-    "price_low": "السعر: الأقل",
-    "price_high": "السعر: الأعلى",
+    "price_low": "الأرخص للأغلى",
+    "price_high": "الأغلى للأرخص",
     "most_viewed": "الأكثر مشاهدة",
     "apply": "تطبيق",
     "reset": "إعادة تعيين",

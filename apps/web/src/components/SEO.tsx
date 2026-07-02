@@ -13,7 +13,7 @@ interface SEOProps {
 
 const DEFAULT_TITLE = 'عقارات جرمانا | 3qarat Jaramana';
 const DEFAULT_DESC =
-  'أفضل منصة لبيع وإيجار العقارات في جرمانا ودمشق وريف دمشق - Best real estate platform in Jaramana, Damascus & Rif Dimashq';
+  'أفضل منصة لبيع وإيجار العقارات في جرمانا - Best real estate platform in Jaramana';
 const DEFAULT_IMAGE = '/og-image.jpg';
 const SITE_URL = import.meta.env.VITE_APP_URL ?? 'https://3qaratjaramana.com';
 

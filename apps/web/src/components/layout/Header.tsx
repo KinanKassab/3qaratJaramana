@@ -23,6 +23,13 @@ export function Header() {
   // scroll and flip an explicit color state.
   const [onDark, setOnDark] = useState(location.pathname === '/');
 
+  // Close the mobile side menu on any navigation — links outside the menu
+  // (logo, favorites icon, footer links) don't call setMobileMenuOpen(false),
+  // so without this the menu stays open after the page changes.
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname, location.search, setMobileMenuOpen]);
+
   useEffect(() => {
     let frame = 0;
 

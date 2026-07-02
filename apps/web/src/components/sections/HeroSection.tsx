@@ -48,7 +48,7 @@ export function HeroSection() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-primary-500/20 border border-primary-400/30 text-primary-200 rounded-full px-4 py-1.5 text-sm mb-6">
             <MapPin className="h-3.5 w-3.5" />
-            {language === 'ar' ? 'جرمانا · دمشق · ريف دمشق' : 'Jaramana · Damascus · Rif Dimashq'}
+            {language === 'ar' ? 'جرمانا — ريف دمشق' : 'Jaramana — Rif Dimashq'}
           </div>
 
           {/* Title */}
@@ -114,7 +114,7 @@ export function HeroSection() {
         >
           {[
             { label: language === 'ar' ? 'عقار +' : '+ Properties', value: '500' },
-            { label: language === 'ar' ? 'منطقة' : 'Districts', value: '15' },
+            { label: language === 'ar' ? 'حي في جرمانا' : 'Neighborhoods', value: '8' },
             { label: language === 'ar' ? 'عميل سعيد' : 'Happy Clients', value: '1000+' },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
