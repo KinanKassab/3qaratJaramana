@@ -10,6 +10,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { supabase } from '@/lib/supabase';
 import { formatPrice, formatArea, formatDate, getLocalizedText } from '@shared/utils/format';
 import { buildWhatsAppContactLink } from '@shared/utils/whatsapp';
+import { CONTACT_PHONE } from '@shared/utils/constants';
 import { SEO } from '@/components/SEO';
 import { PropertyImageSlider } from '@/components/property/PropertyImageSlider';
 import { PropertyVideoPlayer } from '@/components/property/PropertyVideoPlayer';
@@ -88,13 +89,19 @@ export function PropertyDetailPage() {
     ? getLocalizedText(property.category.name_ar, property.category.name_en, language)
     : null;
 
-  const agentWhatsApp = property.agent?.phone
-    ? buildWhatsAppContactLink(property.agent.phone, `أريد الاستفسار عن: ${title}`)
-    : null;
+  // Fall back to the office number so the contact/booking buttons always work
+  const contactPhone = property.agent?.phone ?? CONTACT_PHONE;
 
-  const previewWhatsApp = property.agent?.phone
-    ? buildWhatsAppContactLink(property.agent.phone, `أريد حجز معاينة للعقار: ${title}`)
-    : null;
+  const agentWhatsApp = buildWhatsAppContactLink(
+    contactPhone,
+    `مرحباً، أريد الاستفسار عن العقار: ${title}\n${APP_URL}/property/${property.slug}`
+  );
+
+  // Book-appointment button: WhatsApp link with a ready-made message
+  const previewWhatsApp = buildWhatsAppContactLink(
+    contactPhone,
+    `مرحباً، أريد حجز موعد لمعاينة العقار: ${title}\n${APP_URL}/property/${property.slug}\nما هي الأوقات المتاحة؟`
+  );
 
   return (
     <>
@@ -274,15 +281,14 @@ export function PropertyDetailPage() {
 
                 {/* Contact buttons */}
                 <div className="space-y-3">
-                  {property.agent?.phone && (
-                    <a
-                      href={`tel:${property.agent.phone}`}
-                      className="btn-secondary w-full justify-center gap-2 py-3"
-                    >
-                      <Phone className="h-4 w-4" />
-                      {property.agent.phone}
-                    </a>
-                  )}
+                  <a
+                    href={`tel:${contactPhone}`}
+                    className="btn-secondary w-full justify-center gap-2 py-3"
+                    dir="ltr"
+                  >
+                    <Phone className="h-4 w-4" />
+                    {contactPhone}
+                  </a>
 
                   {agentWhatsApp && (
                     <a
@@ -322,15 +328,13 @@ export function PropertyDetailPage() {
 
       {/* Mobile sticky bottom contact bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-dark-900 border-t border-dark-100 dark:border-dark-800 p-3 flex gap-2">
-        {property.agent?.phone && (
-          <a
-            href={`tel:${property.agent.phone}`}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dark-200 dark:border-dark-700 text-sm font-semibold text-dark-800 dark:text-dark-200"
-          >
-            <Phone className="h-4 w-4" />
-            {t('common.call')}
-          </a>
-        )}
+        <a
+          href={`tel:${contactPhone}`}
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dark-200 dark:border-dark-700 text-sm font-semibold text-dark-800 dark:text-dark-200"
+        >
+          <Phone className="h-4 w-4" />
+          {t('common.call')}
+        </a>
         {agentWhatsApp && (
           <a
             href={agentWhatsApp}

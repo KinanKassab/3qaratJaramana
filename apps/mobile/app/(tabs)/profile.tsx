@@ -5,11 +5,10 @@ import {
 import { useUIStore } from '@/stores/uiStore';
 import { applyRTL } from '@/utils/rtl';
 import { buildWhatsAppContactLink } from '@shared/utils/whatsapp';
+import { CONTACT_PHONE } from '@shared/utils/constants';
 import {
   Globe, Moon, Sun, Phone, MessageCircle, ChevronRight,
 } from 'lucide-react-native';
-
-const CONTACT_PHONE = '+963112345678';
 
 export default function SettingsScreen() {
   const { language, theme, setLanguage, setTheme } = useUIStore();

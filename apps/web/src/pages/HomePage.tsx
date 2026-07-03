@@ -13,6 +13,8 @@ import { HeroSection } from '@/components/sections/HeroSection';
 import { PropertyGrid } from '@/components/property/PropertyGrid';
 import { SEO } from '@/components/SEO';
 import { getLocalizedText } from '@shared/utils/format';
+import { buildWhatsAppContactLink } from '@shared/utils/whatsapp';
+import { CONTACT_PHONE, CONTACT_PHONE_DISPLAY } from '@shared/utils/constants';
 
 function SectionHeader({ title, subtitle, cta, ctaHref }: {
   title: string;
@@ -45,7 +47,8 @@ export function HomePage() {
   const { language } = useUIStore();
   const { data: featured, isLoading: loadingFeatured } = useFeaturedProperties(6);
   const { data: latest, isLoading: loadingLatest } = useLatestProperties(8);
-  const { data: cities } = useLocations('city');
+  // All active districts are Jaramana neighborhoods — the platform is Jaramana-only
+  const { data: neighborhoods } = useLocations('district');
 
   const whyUsItems = [
     {
@@ -92,8 +95,8 @@ export function HomePage() {
       <SEO
         title={language === 'ar' ? 'الرئيسية' : 'Home'}
         description={language === 'ar'
-          ? 'ابحث عن عقارك المثالي في جرمانا ودمشق - شقق وفلل وأراضي للبيع والإيجار'
-          : 'Find your perfect property in Jaramana & Damascus - Apartments, villas, land for sale & rent'}
+          ? 'ابحث عن عقارك المثالي في جرمانا - شقق وفلل وأراضي للبيع والإيجار'
+          : 'Find your perfect property in Jaramana - Apartments, villas, land for sale & rent'}
       />
 
       {/* Hero */}
@@ -116,28 +119,28 @@ export function HomePage() {
           title={t('home.latest')}
           subtitle={language === 'ar' ? 'أحدث العقارات المضافة' : 'The newest properties added'}
           cta={t('common.view_all')}
-          ctaHref="/properties?sort=newest"
+          ctaHref="/properties"
         />
         <PropertyGrid properties={latest} loading={loadingLatest} skeletonCount={8} columns={4} />
       </section>
 
-      {/* Popular Locations */}
-      {cities && cities.length > 0 && (
+      {/* Popular Neighborhoods — Jaramana's districts */}
+      {neighborhoods && neighborhoods.length > 0 && (
         <section className="py-16 px-4 sm:px-6 max-w-7xl mx-auto">
           <SectionHeader
             title={t('home.popular_locations')}
-            subtitle={language === 'ar' ? 'استكشف أكثر المناطق طلباً' : 'Explore the most sought-after areas'}
+            subtitle={language === 'ar' ? 'استكشف أحياء جرمانا الأكثر طلباً' : "Explore Jaramana's most sought-after neighborhoods"}
           />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {cities.slice(0, 8).map((city, idx) => (
+            {neighborhoods.slice(0, 8).map((district, idx) => (
               <motion.div
-                key={city.id}
+                key={district.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
               >
                 <Link
-                  to={`/properties?location_id=${city.id}`}
+                  to={`/properties?location_id=${district.id}`}
                   className="relative group block rounded-2xl overflow-hidden aspect-[4/3] bg-gradient-to-br from-secondary-700 to-secondary-900"
                 >
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
@@ -145,7 +148,7 @@ export function HomePage() {
                     <div className="flex items-center gap-1.5 text-white">
                       <MapPin className="h-4 w-4 text-primary-400" />
                       <span className="font-semibold">
-                        {getLocalizedText(city.name_ar, city.name_en, language)}
+                        {getLocalizedText(district.name_ar, district.name_en, language)}
                       </span>
                     </div>
                   </div>
@@ -234,14 +237,15 @@ export function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <a
-              href="tel:+963112345678"
+              href={`tel:${CONTACT_PHONE}`}
               className="flex items-center justify-center gap-3 px-5 py-3.5 sm:px-8 sm:py-4 bg-primary-500 hover:bg-primary-600 rounded-xl font-semibold transition-colors"
+              dir="ltr"
             >
               <Phone className="h-5 w-5" />
-              +963 11 234 5678
+              {CONTACT_PHONE_DISPLAY}
             </a>
             <a
-              href="https://wa.me/963112345678"
+              href={buildWhatsAppContactLink(CONTACT_PHONE, language === 'ar' ? 'مرحباً، لدي استفسار عن عقاراتكم في جرمانا' : 'Hello, I have a question about your properties in Jaramana')}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-3 px-5 py-3.5 sm:px-8 sm:py-4 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-semibold transition-colors"

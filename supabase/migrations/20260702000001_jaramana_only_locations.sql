@@ -1,30 +1,22 @@
 -- ============================================================
--- Seed Data — عقارات جرمانا
--- The platform is Jaramana-only:
---   Jaramana (city) > its real neighborhoods (districts)
--- Mirrors the live database. Idempotent (matches by slug).
+-- Jaramana-only locations — عقارات جرمانا
+-- Mirrors the live database structure:
+--   Jaramana (city, no parent) > its real neighborhoods (districts)
+-- Idempotent: safe to run on a fresh database or on the live one
+-- (matches existing rows by slug and only normalizes them).
 -- ============================================================
 
--- ============================================================
--- CATEGORIES
--- ============================================================
-INSERT INTO public.categories (name_ar, name_en, slug, icon, sort_order) VALUES
-  ('شقق سكنية', 'Apartments', 'apartments', 'building', 1),
-  ('فلل وقصور', 'Villas', 'villas', 'home', 2),
-  ('بيوت', 'Houses', 'houses', 'house', 3),
-  ('أراضي', 'Land', 'land', 'map', 4),
-  ('محلات تجارية', 'Commercial', 'commercial', 'store', 5),
-  ('مكاتب', 'Offices', 'offices', 'briefcase', 6)
-ON CONFLICT (slug) DO NOTHING;
+-- 1) Jaramana city (top-level)
+INSERT INTO public.locations (name_ar, name_en, slug, type, parent_id, sort_order)
+VALUES ('جرمانا', 'Jaramana', 'jaramana', 'city', NULL, 0)
+ON CONFLICT (slug) DO UPDATE SET
+  type = 'city',
+  parent_id = NULL,
+  is_active = true;
 
--- ============================================================
--- LOCATIONS: Jaramana > Neighborhoods
--- ============================================================
-INSERT INTO public.locations (name_ar, name_en, slug, type, parent_id, sort_order) VALUES
-  ('جرمانا', 'Jaramana', 'jaramana', 'city', NULL, 0)
-ON CONFLICT (slug) DO NOTHING;
-
-INSERT INTO public.locations (name_ar, name_en, slug, type, parent_id, sort_order) VALUES
+-- 2) Jaramana neighborhoods
+INSERT INTO public.locations (name_ar, name_en, slug, type, parent_id, sort_order)
+VALUES
   ('حارة الجرة', 'Harat Al-Jarra', 'harat-al-jarra', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 1),
   ('المول', 'Al-Mall', 'al-mall', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 2),
   ('القوس', 'Al-Qaws', 'al-qaws', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 3),
@@ -52,10 +44,34 @@ INSERT INTO public.locations (name_ar, name_en, slug, type, parent_id, sort_orde
   ('توسع الحمصي', 'Tawassu Al-Homsi', 'tawassu-al-homsi', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 25),
   ('النسيم', 'Al-Nasim', 'al-nasim', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 26),
   ('التربة', 'Al-Turba', 'al-turba', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 27)
+ON CONFLICT (slug) DO UPDATE SET
+  type = 'district',
+  parent_id = EXCLUDED.parent_id,
+  sort_order = EXCLUDED.sort_order,
+  is_active = true;
+
+-- 3) Default categories (reference data the app expects)
+INSERT INTO public.categories (name_ar, name_en, slug, icon, sort_order) VALUES
+  ('شقق سكنية', 'Apartments', 'apartments', 'building', 1),
+  ('فلل وقصور', 'Villas', 'villas', 'home', 2),
+  ('بيوت', 'Houses', 'houses', 'house', 3),
+  ('أراضي', 'Land', 'land', 'map', 4),
+  ('محلات تجارية', 'Commercial', 'commercial', 'store', 5),
+  ('مكاتب', 'Offices', 'offices', 'briefcase', 6)
 ON CONFLICT (slug) DO NOTHING;
 
--- ============================================================
--- NOTE: Admin and agent users are created via Supabase Auth dashboard
--- or via the registration flow in the app. Seed data only includes
--- reference data (categories, locations) to avoid auth complexity.
--- ============================================================
+-- 4) Keep only Jaramana's tree active (platform is Jaramana-only)
+UPDATE public.locations
+SET is_active = false
+WHERE slug <> 'jaramana'
+  AND (parent_id IS NULL OR parent_id <> (SELECT id FROM public.locations WHERE slug = 'jaramana'));
+
+-- 5) Attach any orphaned property to Jaramana city
+UPDATE public.properties
+SET location_id = (SELECT id FROM public.locations WHERE slug = 'jaramana')
+WHERE location_id IS NOT NULL
+  AND location_id NOT IN (
+    SELECT id FROM public.locations
+    WHERE slug = 'jaramana'
+       OR parent_id = (SELECT id FROM public.locations WHERE slug = 'jaramana')
+  );

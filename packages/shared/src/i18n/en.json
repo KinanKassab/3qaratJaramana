@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "3qarat Jaramana",
-    "tagline": "Find your dream home in Jaramana & Damascus"
+    "tagline": "Find your dream home in Jaramana"
   },
   "nav": {
     "home": "Home",
@@ -17,14 +17,14 @@
   },
   "home": {
     "hero": {
-      "title": "Find Your Perfect Property",
-      "subtitle": "Thousands of properties in Jaramana, Damascus & Rif Dimashq",
-      "search_placeholder": "Search by location or district...",
+      "title": "Find Your Perfect Property in Jaramana",
+      "subtitle": "The best properties for sale and rent in Jaramana's neighborhoods",
+      "search_placeholder": "Search for a neighborhood or property in Jaramana...",
       "search_button": "Search"
     },
     "featured": "Featured Properties",
     "latest": "Latest Properties",
-    "popular_locations": "Popular Locations",
+    "popular_locations": "Most Popular Neighborhoods",
     "why_us": "Why Choose Us?",
     "testimonials": "Client Reviews",
     "contact": "Contact Us"
@@ -54,7 +54,9 @@
     "whatsapp": "WhatsApp",
     "qr_code": "QR Code",
     "book_appointment": "Book Viewing",
-    "add_to_compare": "Add to Compare",
+    "compare": "Compare",
+    "compare_added": "Comparing",
+    "add_to_compare": "Add this property to compare it with others",
     "remove_from_compare": "Remove from Compare",
     "add_to_favorites": "Add to Favorites",
     "remove_from_favorites": "Remove from Favorites",
@@ -94,17 +96,20 @@
     "all_locations": "All Locations",
     "select_city": "Select City",
     "select_district": "Select District",
+    "district": "Neighborhood",
+    "all_districts": "All Neighborhoods",
     "price_range": "Price Range",
+    "custom": "Custom",
     "area_range": "Area Range",
-    "bedrooms": "Bedrooms",
+    "bedrooms": "Bedrooms with living room",
     "bathrooms": "Bathrooms",
     "any": "Any",
     "featured_only": "Featured Only",
     "sort_by": "Sort By",
     "newest": "Newest",
     "oldest": "Oldest",
-    "price_low": "Price: Low to High",
-    "price_high": "Price: High to Low",
+    "price_low": "Cheapest to Most Expensive",
+    "price_high": "Most Expensive to Cheapest",
     "most_viewed": "Most Viewed",
     "apply": "Apply",
     "reset": "Reset",
