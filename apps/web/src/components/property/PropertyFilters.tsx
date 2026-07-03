@@ -5,7 +5,7 @@ import { SlidersHorizontal, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { useUIStore } from '@/stores/uiStore';
 import { getLocalizedText } from '@shared/utils/format';
-import type { PropertyFilters as Filters } from '@shared/types/app.types';
+import type { PropertyFilters as Filters, Currency } from '@shared/types/app.types';
 import { Select } from '@/components/ui/Select';
 import { cn } from '@/lib/cn';
 
@@ -19,8 +19,8 @@ interface PropertyFiltersProps {
 const URL_KEYS: Partial<Record<keyof Filters, string>> = {
   listing_type: 'type',
   sort_by: 'sort',
-  is_featured: 'featured',
   search: 'q',
+  location_ids: 'location_id',
 };
 
 interface PricePreset {
@@ -31,19 +31,24 @@ interface PricePreset {
   max?: number;
 }
 
-// Ready-made price ranges (SYP) — sale prices vs monthly rent
-const SALE_PRICE_PRESETS: PricePreset[] = [
-  { id: 'lt500m', label_ar: 'أقل من 500 مليون', label_en: 'Under 500M', max: 500_000_000 },
-  { id: '500m-1b', label_ar: '500 مليون – 1 مليار', label_en: '500M – 1B', min: 500_000_000, max: 1_000_000_000 },
-  { id: '1b-2b', label_ar: '1 – 2 مليار', label_en: '1B – 2B', min: 1_000_000_000, max: 2_000_000_000 },
-  { id: 'gt2b', label_ar: 'أكثر من 2 مليار', label_en: 'Over 2B', min: 2_000_000_000 },
+// Ready-made price ranges per currency:
+// USD in thousands, SYP in millions
+const USD_PRICE_PRESETS: PricePreset[] = [
+  { id: 'usd-5-20', label_ar: '5 - 20 ألف', label_en: '5–20K', min: 5_000, max: 20_000 },
+  { id: 'usd-20-35', label_ar: '20 - 35 ألف', label_en: '20–35K', min: 20_000, max: 35_000 },
+  { id: 'usd-35-50', label_ar: '35 - 50 ألف', label_en: '35–50K', min: 35_000, max: 50_000 },
+  { id: 'usd-50-80', label_ar: '50 - 80 ألف', label_en: '50–80K', min: 50_000, max: 80_000 },
+  { id: 'usd-80-150', label_ar: '80 - 150 ألف', label_en: '80–150K', min: 80_000, max: 150_000 },
+  { id: 'usd-150plus', label_ar: 'أكثر من 150 ألف', label_en: '150K+', min: 150_000 },
 ];
 
-const RENT_PRICE_PRESETS: PricePreset[] = [
-  { id: 'lt1m', label_ar: 'أقل من مليون', label_en: 'Under 1M', max: 1_000_000 },
-  { id: '1m-2m', label_ar: '1 – 2 مليون', label_en: '1M – 2M', min: 1_000_000, max: 2_000_000 },
-  { id: '2m-5m', label_ar: '2 – 5 مليون', label_en: '2M – 5M', min: 2_000_000, max: 5_000_000 },
-  { id: 'gt5m', label_ar: 'أكثر من 5 مليون', label_en: 'Over 5M', min: 5_000_000 },
+const SYP_PRICE_PRESETS: PricePreset[] = [
+  { id: 'syp-100-200', label_ar: '100 - 200 مليون', label_en: '100–200M', min: 100_000_000, max: 200_000_000 },
+  { id: 'syp-200-300', label_ar: '200 - 300 مليون', label_en: '200–300M', min: 200_000_000, max: 300_000_000 },
+  { id: 'syp-300-500', label_ar: '300 - 500 مليون', label_en: '300–500M', min: 300_000_000, max: 500_000_000 },
+  { id: 'syp-500-950', label_ar: '500 - 950 مليون', label_en: '500–950M', min: 500_000_000, max: 950_000_000 },
+  { id: 'syp-950-1300', label_ar: '950 - 1300 مليون', label_en: '950–1300M', min: 950_000_000, max: 1_300_000_000 },
+  { id: 'syp-1300plus', label_ar: 'أكثر من 1300 مليون', label_en: '1300M+', min: 1_300_000_000 },
 ];
 
 export function PropertyFilters({ onFiltersChange, collapsed = false }: PropertyFiltersProps) {
@@ -56,17 +61,17 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
 
   const [filters, setFilters] = useState<Filters>(() => ({
     listing_type: (searchParams.get('type') as 'sale' | 'rent') ?? 'sale',
-    location_id: searchParams.get('location_id') ?? undefined,
+    location_ids: searchParams.get('location_id')?.split(',').filter(Boolean) ?? [],
+    currency: (searchParams.get('currency') as Currency) ?? 'SYP',
     min_price: searchParams.get('min_price') ? Number(searchParams.get('min_price')) : undefined,
     max_price: searchParams.get('max_price') ? Number(searchParams.get('max_price')) : undefined,
     bedrooms: searchParams.get('bedrooms') ? Number(searchParams.get('bedrooms')) : undefined,
     bathrooms: searchParams.get('bathrooms') ? Number(searchParams.get('bathrooms')) : undefined,
-    is_featured: searchParams.get('featured') === 'true' ? true : undefined,
     sort_by: (searchParams.get('sort') as Filters['sort_by']) ?? 'price_asc',
     search: searchParams.get('q') ?? undefined,
   }));
 
-  const pricePresets = filters.listing_type === 'rent' ? RENT_PRICE_PRESETS : SALE_PRICE_PRESETS;
+  const pricePresets = filters.currency === 'USD' ? USD_PRICE_PRESETS : SYP_PRICE_PRESETS;
   const activePreset = pricePresets.find(
     (p) => p.min === filters.min_price && p.max === filters.max_price
   );
@@ -83,10 +88,11 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
     const params = new URLSearchParams(searchParams);
     for (const [key, value] of Object.entries(patch)) {
       const param = URL_KEYS[key as keyof Filters] ?? key;
-      if (value === undefined || value === '' || value === null) {
+      const serialized = Array.isArray(value) ? value.join(',') : value;
+      if (serialized === undefined || serialized === '' || serialized === null) {
         params.delete(param);
       } else {
-        params.set(param, String(value));
+        params.set(param, String(serialized));
       }
     }
     params.set('page', '1');
@@ -97,19 +103,19 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
     applyFilters({ [key]: value } as Partial<Filters>);
   };
 
+  const toggleNeighborhood = (id: string) => {
+    const current = filters.location_ids ?? [];
+    const next = current.includes(id)
+      ? current.filter((x) => x !== id)
+      : [...current, id];
+    applyFilters({ location_ids: next });
+  };
+
   const resetFilters = () => {
-    setFilters({ listing_type: 'sale', sort_by: 'price_asc', page: 1 });
+    setFilters({ listing_type: 'sale', currency: 'SYP', sort_by: 'price_asc', page: 1 });
     setCustomPrice(false);
     setSearchParams({ type: 'sale' });
   };
-
-  const districtOptions = [
-    { value: '', label: t('filters.all_districts') },
-    ...(districts ?? []).map((d) => ({
-      value: d.id,
-      label: getLocalizedText(d.name_ar, d.name_en, language),
-    })),
-  ];
 
   const sortOptions = [
     { value: 'price_asc', label: t('filters.price_low') },
@@ -119,13 +125,14 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
 
   const bedroomOptions = [1, 2, 3, 4, 5];
 
+  const selectedCount = filters.location_ids?.length ?? 0;
+
   const hasActiveFilters =
-    filters.location_id ||
+    selectedCount > 0 ||
     filters.min_price ||
     filters.max_price ||
     filters.bedrooms ||
-    filters.bathrooms ||
-    filters.is_featured;
+    filters.bathrooms;
 
   return (
     <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-card p-5">
@@ -153,11 +160,7 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
         {(['sale', 'rent'] as const).map((type) => (
           <button
             key={type}
-            onClick={() => {
-              // Price presets differ between sale and rent — clear the range on switch
-              applyFilters({ listing_type: type, min_price: undefined, max_price: undefined });
-              setCustomPrice(false);
-            }}
+            onClick={() => updateFilter('listing_type', type)}
             className={cn(
               'flex-1 py-2 rounded-lg text-sm font-medium transition-colors border',
               filters.listing_type === type
@@ -172,19 +175,68 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
 
       {expanded && (
         <div className="space-y-4">
-          {/* Neighborhood — the only location filter (Jaramana is the only area) */}
-          <Select
-            label={t('filters.district')}
-            options={districtOptions}
-            value={filters.location_id ?? ''}
-            onChange={(e) => updateFilter('location_id', e.target.value || undefined)}
-          />
+          {/* Neighborhoods — multi-select checkboxes */}
+          <div>
+            <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
+              {t('filters.district')}
+              {selectedCount > 0 && (
+                <span className="ms-1.5 text-xs text-primary-600 dark:text-primary-400 font-semibold">
+                  ({selectedCount})
+                </span>
+              )}
+            </label>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1 max-h-52 overflow-y-auto rounded-xl border border-dark-100 dark:border-dark-700 p-3">
+              {(districts ?? []).map((d) => {
+                const checked = filters.location_ids?.includes(d.id) ?? false;
+                return (
+                  <label
+                    key={d.id}
+                    className="flex items-center gap-2 cursor-pointer py-1 text-sm text-dark-700 dark:text-dark-300"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleNeighborhood(d.id)}
+                      className="w-4 h-4 rounded text-primary-500 accent-primary-500 flex-shrink-0"
+                    />
+                    <span className="truncate">
+                      {getLocalizedText(d.name_ar, d.name_en, language)}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
 
-          {/* Price range — ready-made presets + custom */}
+          {/* Price range — currency toggle + ready-made presets + custom */}
           <div>
             <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
               {t('filters.price_range')}
             </label>
+
+            {/* Currency toggle */}
+            <div className="flex gap-2 mb-2">
+              {(['SYP', 'USD'] as const).map((cur) => (
+                <button
+                  key={cur}
+                  onClick={() => {
+                    if (filters.currency === cur) return;
+                    // Presets differ between currencies — clear the range on switch
+                    setCustomPrice(false);
+                    applyFilters({ currency: cur, min_price: undefined, max_price: undefined });
+                  }}
+                  className={cn(
+                    'flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors border',
+                    filters.currency === cur
+                      ? 'bg-secondary-800 text-white border-secondary-800 dark:bg-primary-500 dark:border-primary-500'
+                      : 'border-dark-200 dark:border-dark-600 text-dark-600 dark:text-dark-400 hover:border-primary-300'
+                  )}
+                >
+                  {cur === 'USD' ? `${t('filters.usd')} $` : t('filters.syp')}
+                </button>
+              ))}
+            </div>
+
             <div className="flex gap-2 flex-wrap mb-2">
               {pricePresets.map((preset) => {
                 const isActive = !customPrice && activePreset?.id === preset.id;
@@ -287,19 +339,6 @@ export function PropertyFilters({ onFiltersChange, collapsed = false }: Property
               ))}
             </div>
           </div>
-
-          {/* Featured only */}
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={filters.is_featured === true}
-              onChange={(e) => updateFilter('is_featured', e.target.checked ? true : undefined)}
-              className="w-4 h-4 rounded text-primary-500 accent-primary-500"
-            />
-            <span className="text-sm font-medium text-dark-700 dark:text-dark-300">
-              {t('filters.featured_only')}
-            </span>
-          </label>
 
           {/* Sort */}
           <Select

@@ -47,6 +47,7 @@ export const propertySchema = z.object({
   listing_type: z.enum(['sale', 'rent']),
   status: z.enum(['available', 'sold', 'rented', 'draft']).default('available'),
   price: z.number().positive('يرجى إدخال سعر صالح'),
+  currency: z.enum(['SYP', 'USD']).default('SYP'),
   price_period: z.enum(['monthly', 'yearly', 'daily']).optional().nullable(),
   area: z.number().positive().optional().nullable(),
   bedrooms: z.number().int().min(0).optional().nullable(),
@@ -54,7 +55,6 @@ export const propertySchema = z.object({
   floors: z.number().int().min(0).optional().nullable(),
   floor_number: z.number().int().min(0).optional().nullable(),
   parking_spaces: z.number().int().min(0).optional().nullable(),
-  is_featured: z.boolean().default(false),
   is_furnished: z.boolean().default(false),
   amenities: z.array(z.string()).default([]),
 });

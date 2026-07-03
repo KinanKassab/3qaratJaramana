@@ -83,7 +83,7 @@ export function PropertyFormPage() {
     defaultValues: {
       listing_type: 'sale',
       status: 'draft',
-      is_featured: false,
+      currency: 'SYP',
     },
   });
 
@@ -124,6 +124,7 @@ export function PropertyFormPage() {
       address_ar: p.address_ar ?? '',
       address_en: p.address_en ?? '',
       price: p.price ?? 0,
+      currency: p.currency ?? 'SYP',
       area: p.area ?? undefined,
       bedrooms: p.bedrooms ?? undefined,
       bathrooms: p.bathrooms ?? undefined,
@@ -133,7 +134,6 @@ export function PropertyFormPage() {
       location_id: p.location_id ?? '',
       latitude: p.latitude ?? undefined,
       longitude: p.longitude ?? undefined,
-      is_featured: p.is_featured ?? false,
       price_period: p.price_period ?? undefined,
     });
     if (p.images) {
@@ -308,10 +308,18 @@ export function PropertyFormPage() {
           </h2>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="col-span-2">
+            <div>
               <label className="block text-sm font-medium mb-1.5">{formLabel('السعر', 'Price')}</label>
               <input {...form.register('price', { valueAsNumber: true })} type="number" className="input-base" dir="ltr" />
               {form.formState.errors.price && <p className="text-red-500 text-xs mt-1">{form.formState.errors.price.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5">{formLabel('العملة', 'Currency')}</label>
+              <select {...form.register('currency')} className="input-base">
+                <option value="SYP">{formLabel('ليرة سورية', 'SYP')}</option>
+                <option value="USD">{formLabel('دولار', 'USD')}</option>
+              </select>
             </div>
 
             <div>
@@ -363,17 +371,6 @@ export function PropertyFormPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="is_featured"
-              {...form.register('is_featured')}
-              className="w-4 h-4 rounded text-primary-500"
-            />
-            <label htmlFor="is_featured" className="text-sm font-medium">
-              {formLabel('عقار مميز', 'Featured Property')}
-            </label>
-          </div>
         </div>
 
         {/* Location */}

@@ -29,25 +29,33 @@ export async function buildPropertiesQuery(
     query = query.eq('category_id', filters.category_id);
   }
 
-  if (filters.location_id) {
-    // Check if this is a city (has district children); if so, include all districts
+  // Multi-select neighborhoods take precedence over the single location_id
+  const locationIds = filters.location_ids?.length
+    ? filters.location_ids
+    : filters.location_id
+      ? [filters.location_id]
+      : [];
+
+  if (locationIds.length > 0) {
+    // Include district children when a city id is passed (e.g. Jaramana itself)
     const { data: children } = await supabase
       .from('locations')
       .select('id')
-      .eq('parent_id', filters.location_id);
+      .in('parent_id', locationIds);
 
-    if (children && children.length > 0) {
-      query = query.in('location_id', [
-        filters.location_id,
-        ...children.map((c) => c.id),
-      ]);
-    } else {
-      query = query.eq('location_id', filters.location_id);
-    }
+    query = query.in('location_id', [
+      ...locationIds,
+      ...(children?.map((c) => c.id) ?? []),
+    ]);
   }
 
   if (filters.listing_type) {
     query = query.eq('listing_type', filters.listing_type);
+  }
+
+  // A price range is currency-specific — only match listings in that currency
+  if (filters.min_price !== undefined || filters.max_price !== undefined) {
+    query = query.eq('currency', filters.currency ?? 'SYP');
   }
 
   if (filters.min_price !== undefined) {
@@ -74,10 +82,6 @@ export async function buildPropertiesQuery(
     query = query.gte('bathrooms', filters.bathrooms);
   }
 
-  if (filters.is_featured === true) {
-    query = query.eq('is_featured', true);
-  }
-
   if (filters.search) {
     query = query.or(
       `title_ar.ilike.%${filters.search}%,title_en.ilike.%${filters.search}%,address_ar.ilike.%${filters.search}%,description_ar.ilike.%${filters.search}%`
@@ -96,11 +100,6 @@ export async function buildPropertiesQuery(
   const sort = sortConfig[filters.sort_by ?? 'newest'];
   query = query.order(sort.column, { ascending: sort.ascending });
 
-  // Featured properties first (secondary sort)
-  if (!filters.sort_by || filters.sort_by === 'newest') {
-    query = query.order('is_featured', { ascending: false });
-  }
-
   // Pagination
   const page = filters.page ?? 1;
   const perPage = filters.per_page ?? 12;
@@ -118,16 +117,6 @@ export function buildPropertyBySlugQuery(supabase: TypedSupabaseClient, slug: st
     .select(PROPERTY_SELECT)
     .eq('slug', slug)
     .single();
-}
-
-export function buildFeaturedPropertiesQuery(supabase: TypedSupabaseClient, limit = 8) {
-  return supabase
-    .from('properties')
-    .select(PROPERTY_SELECT)
-    .eq('is_featured', true)
-    .eq('status', 'available')
-    .order('created_at', { ascending: false })
-    .limit(limit);
 }
 
 export function buildLatestPropertiesQuery(supabase: TypedSupabaseClient, limit = 8) {

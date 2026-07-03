@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Plus, Search, Edit, Trash2, BarChart2, Star, Eye,
+  Plus, Search, Edit, Trash2, BarChart2, Eye,
   ChevronUp, ChevronDown,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -39,8 +39,8 @@ export function PropertiesManagementPage() {
       let query = supabase
         .from('properties')
         .select(`
-          id, title_ar, title_en, slug, price, status, listing_type,
-          is_featured, view_count, created_at, agent_id,
+          id, title_ar, title_en, slug, price, currency, status, listing_type,
+          view_count, created_at, agent_id,
           images:property_images(url, is_cover),
           location:locations(name_ar, name_en),
           category:categories(name_ar, name_en)
@@ -70,13 +70,6 @@ export function PropertiesManagementPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
       setDeleteId(null);
     },
-  });
-
-  const toggleFeatured = useMutation({
-    mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
-      await supabase.from('properties').update({ is_featured: value }).eq('id', id);
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-properties'] }),
   });
 
   const updateStatus = useMutation({
@@ -181,11 +174,10 @@ export function PropertiesManagementPage() {
                               {language === 'ar' ? p.location?.name_ar : p.location?.name_en}
                             </p>
                           </div>
-                          {p.is_featured && <Star className="h-3.5 w-3.5 text-primary-500 flex-shrink-0" />}
                         </div>
                       </td>
                       <td className="table-cell font-medium" dir="ltr">
-                        {formatPrice(p.price, language, 'SYP')}
+                        {formatPrice(p.price, language, p.currency ?? 'SYP')}
                       </td>
                       <td className="table-cell">
                         <select
@@ -216,13 +208,6 @@ export function PropertiesManagementPage() {
                       </td>
                       <td className="table-cell">
                         <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => toggleFeatured.mutate({ id: p.id, value: !p.is_featured })}
-                            className={`p-1.5 rounded-lg transition-colors ${p.is_featured ? 'text-primary-500 bg-primary-50 hover:bg-primary-100' : 'text-dark-400 hover:bg-dark-100'}`}
-                            title={p.is_featured ? 'إلغاء التمييز' : 'تمييز'}
-                          >
-                            <Star className="h-4 w-4" />
-                          </button>
                           <Link
                             to={`/properties/${p.id}/analytics`}
                             className="p-1.5 rounded-lg text-dark-400 hover:bg-dark-100 hover:text-secondary-600 transition-colors"

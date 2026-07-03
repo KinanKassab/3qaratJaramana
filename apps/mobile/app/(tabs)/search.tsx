@@ -82,7 +82,7 @@ export default function SearchScreen() {
                 )}
                 <View style={styles.resultBody}>
                   <Text style={styles.resultTitle} numberOfLines={2}>{title}</Text>
-                  <Text style={styles.resultPrice}>{formatPrice(item.price, language, 'SYP')}</Text>
+                  <Text style={styles.resultPrice}>{formatPrice(item.price, language, item.currency ?? 'SYP')}</Text>
                   <Text style={styles.resultMeta}>
                     {[item.bedrooms != null && `${item.bedrooms} ${isAr ? 'غرف' : 'Beds'}`,
                       item.area != null && `${item.area}م²`].filter(Boolean).join(' · ')}

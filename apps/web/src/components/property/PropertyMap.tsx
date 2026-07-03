@@ -77,18 +77,13 @@ export function PropertyMap({
               position={{ lat: property.latitude!, lng: property.longitude! }}
               onClick={() => showInfoWindow && setSelected(property)}
               label={{
-                text: formatPrice(property.price, language, 'SYP').split('.')[0],
+                text: formatPrice(property.price, language, property.currency).split('.')[0],
                 className: 'text-xs font-bold',
                 color: '#fff',
               }}
               icon={{
-                url: property.is_featured
-                  ? 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><circle cx="18" cy="18" r="17" fill="#C4A35A" stroke="white" stroke-width="2"/></svg>`)
-                  : 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#1B3A5C" stroke="white" stroke-width="2"/></svg>`),
-                scaledSize: new window.google.maps.Size(
-                  property.is_featured ? 36 : 32,
-                  property.is_featured ? 36 : 32
-                ),
+                url: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#1B3A5C" stroke="white" stroke-width="2"/></svg>`),
+                scaledSize: new window.google.maps.Size(32, 32),
                 anchor: new window.google.maps.Point(18, 18),
               }}
             />
@@ -111,7 +106,7 @@ export function PropertyMap({
                 {getLocalizedText(selected.title_ar, selected.title_en, language)}
               </p>
               <p className="text-primary-600 font-semibold text-sm mt-1">
-                {formatPrice(selected.price, language, 'SYP')}
+                {formatPrice(selected.price, language, selected.currency)}
               </p>
               <Link
                 to={`/property/${selected.slug}`}

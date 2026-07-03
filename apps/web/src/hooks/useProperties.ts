@@ -3,7 +3,6 @@ import { supabase } from '@/lib/supabase';
 import {
   buildPropertiesQuery,
   buildPropertyBySlugQuery,
-  buildFeaturedPropertiesQuery,
   buildLatestPropertiesQuery,
 } from '@shared/supabase/queries/properties';
 import type { PropertyFilters, PropertyWithRelations } from '@shared/types/app.types';
@@ -61,18 +60,6 @@ export function useProperty(slug: string) {
     },
     enabled: Boolean(slug),
     staleTime: 5 * 60 * 1000,
-  });
-}
-
-export function useFeaturedProperties(limit = 8) {
-  return useQuery({
-    queryKey: ['featured-properties', limit],
-    queryFn: async () => {
-      const { data, error } = await buildFeaturedPropertiesQuery(supabase, limit);
-      if (error) throw error;
-      return (data as PropertyWithRelations[]) ?? [];
-    },
-    staleTime: 10 * 60 * 1000,
   });
 }
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Building2, Users, Calendar, Eye, TrendingUp, Star,
+  Building2, Users, Calendar, Eye, TrendingUp,
   CheckCircle2, Clock,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -55,7 +55,6 @@ export function DashboardPage() {
         total_appointments: number;
         pending_appointments: number;
         total_views: number;
-        featured_properties: number;
         new_properties_this_month: number;
         new_users_this_month: number;
       };
@@ -102,7 +101,6 @@ export function DashboardPage() {
     { icon: Users, label: language === 'ar' ? 'المستخدمون' : 'Users', value: stats?.total_users ?? 0, sub: `+${stats?.new_users_this_month ?? 0} ${language === 'ar' ? 'هذا الشهر' : 'this month'}`, color: 'bg-blue-500' },
     { icon: Calendar, label: language === 'ar' ? 'المواعيد' : 'Appointments', value: stats?.total_appointments ?? 0, sub: `${stats?.pending_appointments ?? 0} ${language === 'ar' ? 'معلق' : 'pending'}`, color: 'bg-amber-500' },
     { icon: Eye, label: language === 'ar' ? 'إجمالي المشاهدات' : 'Total Views', value: stats?.total_views ?? 0, color: 'bg-emerald-500' },
-    { icon: Star, label: language === 'ar' ? 'عقارات مميزة' : 'Featured', value: stats?.featured_properties ?? 0, color: 'bg-primary-500' },
   ];
 
   const statusVariants: Record<string, 'success' | 'danger' | 'warning' | 'default'> = {
