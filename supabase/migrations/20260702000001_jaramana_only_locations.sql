@@ -1,47 +1,72 @@
 -- ============================================================
--- Jaramana-only restructure — عقارات جرمانا
--- The platform serves Jaramana exclusively. Location tree becomes:
---   Syria (country) > Jaramana (city) > neighborhoods (districts)
--- Old Damascus / Rif Dimashq locations are deactivated (not deleted,
--- to preserve any historical references).
+-- Jaramana-only locations — عقارات جرمانا
+-- Mirrors the live database structure:
+--   Jaramana (city, no parent) > its real neighborhoods (districts)
+-- Idempotent: safe to run on a fresh database or on the live one
+-- (matches existing rows by slug and only normalizes them).
 -- ============================================================
 
--- 1) Ensure the country exists
-INSERT INTO public.locations (id, name_ar, name_en, slug, type, parent_id, latitude, longitude, sort_order)
-VALUES ('a1000000-0000-4000-8000-000000000001', 'سوريا', 'Syria', 'syria', 'country', NULL, 34.8021, 38.9968, 1)
-ON CONFLICT (slug) DO NOTHING;
-
--- 2) Jaramana becomes a city directly under Syria (promoted from district if it existed)
-INSERT INTO public.locations (id, name_ar, name_en, slug, type, parent_id, latitude, longitude, sort_order, is_active)
-VALUES (
-  'a1000000-0000-4000-8000-000000000002', 'جرمانا', 'Jaramana', 'jaramana', 'city',
-  (SELECT id FROM public.locations WHERE slug = 'syria'),
-  33.4862, 36.3462, 1, true
-)
+-- 1) Jaramana city (top-level)
+INSERT INTO public.locations (name_ar, name_en, slug, type, parent_id, sort_order)
+VALUES ('جرمانا', 'Jaramana', 'jaramana', 'city', NULL, 0)
 ON CONFLICT (slug) DO UPDATE SET
   type = 'city',
-  parent_id = (SELECT id FROM public.locations WHERE slug = 'syria'),
-  is_active = true,
-  sort_order = 1;
+  parent_id = NULL,
+  is_active = true;
 
--- 3) Jaramana neighborhoods (districts)
-INSERT INTO public.locations (id, name_ar, name_en, slug, type, parent_id, latitude, longitude, sort_order, is_active)
+-- 2) Jaramana neighborhoods
+INSERT INTO public.locations (name_ar, name_en, slug, type, parent_id, sort_order)
 VALUES
-  ('a1000000-0000-4000-8000-000000000011', 'جرمانا البلد', 'Jaramana Old Town', 'jaramana-albalad', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 33.4880, 36.3450, 1, true),
-  ('a1000000-0000-4000-8000-000000000012', 'ساحة السيوف', 'Sahet Al-Siyouf', 'sahet-alsiyouf', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 33.4905, 36.3400, 2, true),
-  ('a1000000-0000-4000-8000-000000000013', 'ساحة الرئيس', 'Sahet Al-Raees', 'sahet-alraees', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 33.4870, 36.3480, 3, true),
-  ('a1000000-0000-4000-8000-000000000014', 'حي الوحدة', 'Al-Wahda', 'al-wahda', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 33.4840, 36.3500, 4, true),
-  ('a1000000-0000-4000-8000-000000000015', 'حي الروضة', 'Al-Rawda', 'al-rawda', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 33.4895, 36.3520, 5, true),
-  ('a1000000-0000-4000-8000-000000000016', 'حي النهضة', 'Al-Nahda', 'al-nahda', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 33.4825, 36.3440, 6, true),
-  ('a1000000-0000-4000-8000-000000000017', 'مساكن جرمانا', 'Masaken Jaramana', 'masaken-jaramana', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 33.4810, 36.3530, 7, true),
-  ('a1000000-0000-4000-8000-000000000018', 'طريق المطار', 'Airport Road', 'airport-road', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 33.4770, 36.3560, 8, true)
+  ('حارة الجرة', 'Harat Al-Jarra', 'harat-al-jarra', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 1),
+  ('المول', 'Al-Mall', 'al-mall', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 2),
+  ('القوس', 'Al-Qaws', 'al-qaws', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 3),
+  ('القريات', 'Al-Quriyat', 'al-quriyat', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 4),
+  ('النهضة القديمة', 'Al-Nahda Al-Qadima', 'al-nahda-al-qadima', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 5),
+  ('النهضة الجديدة', 'Al-Nahda Al-Jadida', 'al-nahda-al-jadida', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 6),
+  ('شارع الباسل', 'Shara Al-Bassel', 'shara-al-bassel', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 7),
+  ('حي السلام', 'Hay Al-Salam', 'hay-al-salam', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 8),
+  ('ساحة الكرامة', 'Sahat Al-Karama', 'sahat-al-karama', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 9),
+  ('البلدية', 'Al-Baladiya', 'al-baladiya', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 10),
+  ('البيدر', 'Al-Baydar', 'al-baydar', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 11),
+  ('الوحدة', 'Al-Wehda', 'al-wehda', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 12),
+  ('الروضة', 'Al-Rawda', 'al-rawda', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 13),
+  ('كرم صمادي', 'Karm Samadi', 'karm-samadi', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 14),
+  ('الأساس الغربي', 'Al-Asas Al-Gharbi', 'al-asas-al-gharbi', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 15),
+  ('الأساس الشرقي', 'Al-Asas Al-Sharqi', 'al-asas-al-sharqi', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 16),
+  ('الخضر', 'Al-Khadr', 'al-khadr', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 17),
+  ('الروضة مزارع', 'Al-Rawda Mazare', 'al-rawda-mazare', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 18),
+  ('دف الصخر', 'Daff Al-Sakhr', 'daff-al-sakhr', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 19),
+  ('الجمعيات', 'Al-Jamiyyat', 'al-jamiyyat', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 20),
+  ('الحمصي', 'Al-Homsi', 'al-homsi', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 21),
+  ('أوسكار', 'Oscar', 'oscar', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 22),
+  ('الجناين', 'Al-Janayin', 'al-janayin', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 23),
+  ('توسع الجناين', 'Tawassu Al-Janayin', 'tawassu-al-janayin', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 24),
+  ('توسع الحمصي', 'Tawassu Al-Homsi', 'tawassu-al-homsi', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 25),
+  ('النسيم', 'Al-Nasim', 'al-nasim', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 26),
+  ('التربة', 'Al-Turba', 'al-turba', 'district', (SELECT id FROM public.locations WHERE slug = 'jaramana'), 27)
 ON CONFLICT (slug) DO UPDATE SET
   type = 'district',
   parent_id = EXCLUDED.parent_id,
-  is_active = true,
-  sort_order = EXCLUDED.sort_order;
+  sort_order = EXCLUDED.sort_order,
+  is_active = true;
 
--- 4) Remap any property pointing outside Jaramana's tree to Jaramana city
+-- 3) Default categories (reference data the app expects)
+INSERT INTO public.categories (name_ar, name_en, slug, icon, sort_order) VALUES
+  ('شقق سكنية', 'Apartments', 'apartments', 'building', 1),
+  ('فلل وقصور', 'Villas', 'villas', 'home', 2),
+  ('بيوت', 'Houses', 'houses', 'house', 3),
+  ('أراضي', 'Land', 'land', 'map', 4),
+  ('محلات تجارية', 'Commercial', 'commercial', 'store', 5),
+  ('مكاتب', 'Offices', 'offices', 'briefcase', 6)
+ON CONFLICT (slug) DO NOTHING;
+
+-- 4) Keep only Jaramana's tree active (platform is Jaramana-only)
+UPDATE public.locations
+SET is_active = false
+WHERE slug <> 'jaramana'
+  AND (parent_id IS NULL OR parent_id <> (SELECT id FROM public.locations WHERE slug = 'jaramana'));
+
+-- 5) Attach any orphaned property to Jaramana city
 UPDATE public.properties
 SET location_id = (SELECT id FROM public.locations WHERE slug = 'jaramana')
 WHERE location_id IS NOT NULL
@@ -50,10 +75,3 @@ WHERE location_id IS NOT NULL
     WHERE slug = 'jaramana'
        OR parent_id = (SELECT id FROM public.locations WHERE slug = 'jaramana')
   );
-
--- 5) Deactivate every location outside Jaramana's tree (country stays)
-UPDATE public.locations
-SET is_active = false
-WHERE type <> 'country'
-  AND slug <> 'jaramana'
-  AND parent_id IS DISTINCT FROM (SELECT id FROM public.locations WHERE slug = 'jaramana');

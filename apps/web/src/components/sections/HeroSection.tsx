@@ -114,7 +114,7 @@ export function HeroSection() {
         >
           {[
             { label: language === 'ar' ? 'عقار +' : '+ Properties', value: '500' },
-            { label: language === 'ar' ? 'حي في جرمانا' : 'Neighborhoods', value: '8' },
+            { label: language === 'ar' ? 'حي في جرمانا' : 'Neighborhoods', value: '27' },
             { label: language === 'ar' ? 'عميل سعيد' : 'Happy Clients', value: '1000+' },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
