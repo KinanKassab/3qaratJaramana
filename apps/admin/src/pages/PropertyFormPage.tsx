@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { useUIStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
 import { propertySchema } from '@shared/utils/validation';
-import { uploadPropertyImage, deletePropertyImage } from '@/services/storage';
+import { uploadPropertyImage, deletePropertyImage, uploadPropertyVideo, deletePropertyVideo } from '@/services/storage';
 import { Spinner } from '@/components/ui/Spinner';
 import type { z } from 'zod';
 
@@ -40,6 +40,12 @@ interface ImageItem {
   id?: string;
 }
 
+interface VideoItem {
+  url: string;
+  path: string;
+  id?: string;
+}
+
 export function PropertyFormPage() {
   const { id } = useParams<{ id?: string }>();
   const isEditing = !!id;
@@ -48,35 +54,11 @@ export function PropertyFormPage() {
   const { language } = useUIStore();
   const { user } = useAuthStore();
   const [images, setImages] = useState<ImageItem[]>([]);
-  const [videoUrls, setVideoUrls] = useState<string[]>([]);
+  const [videos, setVideos] = useState<VideoItem[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videoUploadError, setVideoUploadError] = useState('');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-
-  const handleVideoUpload = async (file: File) => {
-    setUploadingVideo(true);
-    setVideoUploadError('');
-    try {
-      const formData = new FormData();
-      formData.append('video', file);
-      formData.append('title', form.getValues('title_ar') || file.name);
-      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
-      const supabaseKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
-      const res = await fetch(`${supabaseUrl}/functions/v1/upload-youtube`, {
-        method: 'POST',
-        headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Upload failed');
-      setVideoUrls(prev => [...prev, data.url]);
-    } catch (err: unknown) {
-      setVideoUploadError(err instanceof Error ? err.message : 'Upload failed');
-    } finally {
-      setUploadingVideo(false);
-    }
-  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(propertySchema),
@@ -146,7 +128,7 @@ export function PropertyFormPage() {
       })));
     }
     if (p.videos?.length) {
-      setVideoUrls(p.videos.map((v: any) => v.video_url));
+      setVideos(p.videos.map((v: any) => ({ url: v.video_url, path: v.storage_path ?? '', id: v.id })));
     }
     if (p.amenities) setSelectedAmenities(p.amenities);
   }, [existingProperty]);
@@ -174,10 +156,21 @@ export function PropertyFormPage() {
   });
 
   const { getRootProps: getVideoRootProps, getInputProps: getVideoInputProps, isDragActive: isVideoDragActive } = useDropzone({
-    accept: { 'video/*': [] },
-    multiple: false,
+    accept: { 'video/mp4': ['.mp4'], 'video/webm': ['.webm'], 'video/quicktime': ['.mov'] },
     disabled: uploadingVideo,
-    onDrop: (files) => { if (files[0]) handleVideoUpload(files[0]); },
+    onDrop: async (files) => {
+      setUploadingVideo(true);
+      setVideoUploadError('');
+      const propertyId = id ?? 'temp-' + Date.now();
+      const uploaded: VideoItem[] = [];
+      for (const file of files) {
+        const result = await uploadPropertyVideo(file, propertyId);
+        if (result) uploaded.push(result);
+        else setVideoUploadError(formLabel('فشل رفع أحد الفيديوهات', 'Failed to upload a video'));
+      }
+      setVideos((prev) => [...prev, ...uploaded]);
+      setUploadingVideo(false);
+    },
   });
 
   const saveMutation = useMutation({
@@ -224,13 +217,12 @@ export function PropertyFormPage() {
         );
       }
 
-      const filteredVideos = videoUrls.filter(Boolean);
-      if (filteredVideos.length > 0) {
+      if (videos.length > 0) {
         if (isEditing) {
           await supabase.from('property_videos').delete().eq('property_id', propertyId);
         }
         await db.from('property_videos').insert(
-          filteredVideos.map((url) => ({ property_id: propertyId, video_url: url }))
+          videos.map((v) => ({ property_id: propertyId, video_url: v.url, storage_path: v.path }))
         );
       }
 
@@ -509,7 +501,7 @@ export function PropertyFormPage() {
                 <p className="text-dark-600 dark:text-dark-400 text-sm">
                   {formLabel('اسحب الفيديو هنا أو انقر للاختيار', 'Drag video here or click to select')}
                 </p>
-                <p className="text-dark-400 text-xs mt-1">MP4, MOV, AVI</p>
+                <p className="text-dark-400 text-xs mt-1">{formLabel('MP4, WebM, MOV — حد أقصى 500MB', 'MP4, WebM, MOV — max 500MB')}</p>
               </>
             )}
           </div>
@@ -518,24 +510,26 @@ export function PropertyFormPage() {
             <p className="text-red-500 text-xs">{videoUploadError}</p>
           )}
 
-          {videoUrls.length > 0 && (
+          {videos.length > 0 && (
             <div className="space-y-2">
-              {videoUrls.map((url, idx) => {
-                const videoId = url.split('v=')[1]?.split('&')[0] ?? url;
-                return (
-                <div key={idx} className="flex items-center gap-2 p-3 bg-dark-50 dark:bg-dark-700/50 rounded-xl">
-                  <Video className="h-4 w-4 text-dark-400 shrink-0" />
-                  <span className="flex-1 text-sm text-dark-700 dark:text-dark-300 font-mono">{videoId}</span>
+              {videos.map((video, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 bg-dark-50 dark:bg-dark-700/50 rounded-xl">
+                  <video src={video.url} className="w-16 h-10 object-cover rounded-lg bg-black shrink-0" muted />
+                  <span className="flex-1 text-sm text-dark-700 dark:text-dark-300 truncate">
+                    {video.url.split('/').pop()}
+                  </span>
                   <button
                     type="button"
-                    onClick={() => setVideoUrls(prev => prev.filter((_, i) => i !== idx))}
+                    onClick={async () => {
+                      if (video.path) await deletePropertyVideo(video.path);
+                      setVideos((prev) => prev.filter((_, i) => i !== idx));
+                    }}
                     className="p-1 text-dark-400 hover:text-red-500 transition-colors shrink-0"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
-                );
-              })}
+              ))}
             </div>
           )}
         </div>
