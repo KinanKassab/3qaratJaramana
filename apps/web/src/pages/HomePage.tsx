@@ -6,7 +6,7 @@ import {
   Shield, Clock, Award, Users, MapPin, Phone, Mail,
   CheckCircle2, ArrowLeft, ArrowRight
 } from 'lucide-react';
-import { useFeaturedProperties, useLatestProperties } from '@/hooks/useProperties';
+import { useLatestProperties } from '@/hooks/useProperties';
 import { useLocations } from '@/hooks/useLocations';
 import { useUIStore } from '@/stores/uiStore';
 import { HeroSection } from '@/components/sections/HeroSection';
@@ -45,7 +45,6 @@ function SectionHeader({ title, subtitle, cta, ctaHref }: {
 export function HomePage() {
   const { t } = useTranslation();
   const { language } = useUIStore();
-  const { data: featured, isLoading: loadingFeatured } = useFeaturedProperties(6);
   const { data: latest, isLoading: loadingLatest } = useLatestProperties(8);
   // All active districts are Jaramana neighborhoods — the platform is Jaramana-only
   const { data: neighborhoods } = useLocations('district');
@@ -101,17 +100,6 @@ export function HomePage() {
 
       {/* Hero */}
       <HeroSection />
-
-      {/* Featured Properties */}
-      <section className="py-16 px-4 sm:px-6 max-w-7xl mx-auto">
-        <SectionHeader
-          title={t('home.featured')}
-          subtitle={language === 'ar' ? 'أبرز العقارات المميزة لدينا' : 'Our top featured properties'}
-          cta={t('common.view_all')}
-          ctaHref="/properties?featured=true"
-        />
-        <PropertyGrid properties={featured} loading={loadingFeatured} skeletonCount={6} />
-      </section>
 
       {/* Latest Properties */}
       <section className="py-16 px-4 sm:px-6 max-w-7xl mx-auto bg-dark-50 dark:bg-dark-900/50 rounded-3xl">

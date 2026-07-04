@@ -57,9 +57,6 @@ export function PropertyCard({ property, className, index = 0 }: PropertyCardPro
             <Badge variant={property.listing_type === 'sale' ? 'sale' : 'rent'}>
               {property.listing_type === 'sale' ? t('property.for_sale') : t('property.for_rent')}
             </Badge>
-            {property.is_featured && (
-              <Badge variant="featured">{t('property.featured')}</Badge>
-            )}
             {property.status === 'sold' && (
               <Badge variant="sold">{t('property.sold')}</Badge>
             )}
@@ -81,7 +78,7 @@ export function PropertyCard({ property, className, index = 0 }: PropertyCardPro
         {/* Price */}
         <div className="flex items-start justify-between mb-2">
           <div className="text-xl font-bold text-primary-600 dark:text-primary-400" dir="ltr">
-            {formatPrice(property.price, language, 'SYP', property.price_period)}
+            {formatPrice(property.price, language, property.currency, property.price_period)}
           </div>
           <div className="flex items-center gap-1.5">
             {/* Compare button — labeled pill so visitors discover the feature */}

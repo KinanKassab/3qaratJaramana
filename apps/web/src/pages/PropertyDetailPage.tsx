@@ -144,9 +144,6 @@ export function PropertyDetailPage() {
                     {categoryName && (
                       <Badge variant="default" size="md">{categoryName}</Badge>
                     )}
-                    {property.is_featured && (
-                      <Badge variant="featured" size="md">{t('property.featured')}</Badge>
-                    )}
                     {property.status === 'sold' && (
                       <Badge variant="sold" size="md">{t('property.sold')}</Badge>
                     )}
@@ -258,7 +255,7 @@ export function PropertyDetailPage() {
               {/* Price Card */}
               <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-card p-6 lg:sticky lg:top-24">
                 <div className="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-1" dir="ltr">
-                  {formatPrice(property.price, language, 'SYP', property.price_period)}
+                  {formatPrice(property.price, language, property.currency, property.price_period)}
                 </div>
                 <p className="text-dark-500 text-sm mb-5">
                   {property.area ? formatArea(property.area, language) : ''}

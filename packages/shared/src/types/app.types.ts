@@ -9,6 +9,7 @@ export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'complet
 export type LocationType = 'country' | 'city' | 'district';
 export type Language = 'ar' | 'en';
 export type PricePeriod = 'monthly' | 'yearly' | 'daily';
+export type Currency = 'SYP' | 'USD';
 export type AnalyticsEvent = 'whatsapp_click' | 'share';
 
 export interface User {
@@ -85,6 +86,7 @@ export interface Property {
   listing_type: ListingType;
   status: PropertyStatus;
   price: number;
+  currency: Currency;
   price_period?: PricePeriod | null;
   area?: number | null;
   bedrooms?: number | null;
@@ -92,9 +94,10 @@ export interface Property {
   floors?: number | null;
   floor_number?: number | null;
   parking_spaces?: number | null;
-  is_featured: boolean;
   is_furnished: boolean;
   amenities: string[];
+  source: 'manual' | 'telegram';
+  telegram_message_id?: number | null;
   agent_id?: string | null;
   view_count: number;
   created_at: string;
@@ -112,15 +115,18 @@ export interface PropertyWithRelations extends Property {
 export interface PropertyFilters {
   category_id?: string;
   location_id?: string;
+  /** Multi-select neighborhoods — takes precedence over location_id when set */
+  location_ids?: string[];
   listing_type?: ListingType;
   status?: PropertyStatus;
+  /** Currency the min/max price range refers to */
+  currency?: Currency;
   min_price?: number;
   max_price?: number;
   min_area?: number;
   max_area?: number;
   bedrooms?: number;
   bathrooms?: number;
-  is_featured?: boolean;
   search?: string;
   sort_by?: 'price_asc' | 'price_desc' | 'newest' | 'oldest' | 'views';
   page?: number;
@@ -192,7 +198,6 @@ export interface PropertyAnalyticsFull {
 
 export interface DashboardStats {
   total_properties: number;
-  featured_properties: number;
   sold_properties: number;
   rented_properties: number;
   available_properties: number;

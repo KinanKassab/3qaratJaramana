@@ -33,7 +33,7 @@ export default function FavoritesScreen() {
           >
             {cover && <Image source={{ uri: cover }} style={styles.image} />}
             <View style={styles.body}>
-              <Text style={styles.price}>{formatPrice(item.price, language, 'SYP')}</Text>
+              <Text style={styles.price}>{formatPrice(item.price, language, item.currency ?? 'SYP')}</Text>
               <Text style={styles.title} numberOfLines={2}>{title}</Text>
             </View>
           </TouchableOpacity>

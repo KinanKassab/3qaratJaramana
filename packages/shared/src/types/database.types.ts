@@ -134,6 +134,7 @@ export interface Database {
           listing_type: string;
           status: string;
           price: number;
+          currency: string;
           price_period: string | null;
           area: number | null;
           bedrooms: number | null;
@@ -141,7 +142,6 @@ export interface Database {
           floors: number | null;
           floor_number: number | null;
           parking_spaces: number | null;
-          is_featured: boolean;
           is_furnished: boolean;
           amenities: Json;
           agent_id: string | null;
@@ -165,6 +165,7 @@ export interface Database {
           listing_type: string;
           status?: string;
           price: number;
+          currency?: string;
           price_period?: string | null;
           area?: number | null;
           bedrooms?: number | null;
@@ -172,7 +173,6 @@ export interface Database {
           floors?: number | null;
           floor_number?: number | null;
           parking_spaces?: number | null;
-          is_featured?: boolean;
           is_furnished?: boolean;
           amenities?: Json;
           agent_id?: string | null;
@@ -195,6 +195,7 @@ export interface Database {
           listing_type?: string;
           status?: string;
           price?: number;
+          currency?: string;
           price_period?: string | null;
           area?: number | null;
           bedrooms?: number | null;
@@ -202,7 +203,6 @@ export interface Database {
           floors?: number | null;
           floor_number?: number | null;
           parking_spaces?: number | null;
-          is_featured?: boolean;
           is_furnished?: boolean;
           amenities?: Json;
           agent_id?: string | null;

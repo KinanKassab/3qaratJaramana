@@ -132,7 +132,7 @@ export default function PropertyDetailScreen() {
         <View style={styles.content}>
           {/* Price + badges */}
           <View style={styles.priceRow}>
-            <Text style={styles.price}>{formatPrice(property.price, language, 'SYP')}</Text>
+            <Text style={styles.price}>{formatPrice(property.price, language, property.currency ?? 'SYP')}</Text>
             <View style={[styles.badge, property.listing_type === 'sale' ? styles.badgeSale : styles.badgeRent]}>
               <Text style={styles.badgeText}>{property.listing_type === 'sale' ? (isAr ? 'للبيع' : 'For Sale') : (isAr ? 'للإيجار' : 'For Rent')}</Text>
             </View>

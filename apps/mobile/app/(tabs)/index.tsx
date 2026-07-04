@@ -36,14 +36,9 @@ function PropertyCard({ property }: { property: PropertyWithRelations }) {
                 : (language === 'ar' ? 'للإيجار' : 'For Rent')}
             </Text>
           </View>
-          {property.is_featured && (
-            <View style={[styles.badge, styles.badgeFeatured]}>
-              <Text style={styles.badgeText}>{language === 'ar' ? 'مميز' : 'Featured'}</Text>
-            </View>
-          )}
         </View>
         <Text style={styles.cardPrice} numberOfLines={1}>
-          {formatPrice(property.price, language, 'SYP')}
+          {formatPrice(property.price, language, property.currency ?? 'SYP')}
         </Text>
         <Text style={styles.cardTitle} numberOfLines={2}>{title}</Text>
         {location ? (
@@ -72,19 +67,6 @@ export default function HomeScreen() {
   const { language } = useUIStore();
   const isAr = language === 'ar';
 
-  const { data: featured, isLoading: loadingFeatured } = useQuery({
-    queryKey: ['featured-mobile'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('properties')
-        .select(`*, images:property_images(*), location:locations(name_ar, name_en)`)
-        .eq('is_featured', true)
-        .eq('status', 'available')
-        .limit(6);
-      return (data ?? []) as PropertyWithRelations[];
-    },
-  });
-
   const { data: latest, isLoading: loadingLatest } = useQuery({
     queryKey: ['latest-mobile'],
     queryFn: async () => {
@@ -106,26 +88,8 @@ export default function HomeScreen() {
           {isAr ? 'ابحث عن عقارك\nالمثالي' : 'Find Your\nPerfect Property'}
         </Text>
         <Text style={styles.heroSubtitle}>
-          {isAr ? 'جرمانا · دمشق · ريف دمشق' : 'Jaramana · Damascus · Rif Dimashq'}
+          {isAr ? 'جرمانا — ريف دمشق' : 'Jaramana — Rif Dimashq'}
         </Text>
-      </View>
-
-      {/* Featured */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{isAr ? 'العقارات المميزة' : 'Featured Properties'}</Text>
-        {loadingFeatured ? (
-          <ActivityIndicator color="#C4A35A" style={{ marginVertical: 20 }} />
-        ) : (
-          <FlatList
-            data={featured}
-            keyExtractor={item => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => <PropertyCard property={item} />}
-            ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
-            contentContainerStyle={{ paddingHorizontal: 16 }}
-          />
-        )}
       </View>
 
       {/* Latest */}
@@ -193,7 +157,6 @@ const styles = StyleSheet.create({
   badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20 },
   badgeSale: { backgroundColor: '#1B3A5C' },
   badgeRent: { backgroundColor: '#C4A35A' },
-  badgeFeatured: { backgroundColor: '#fef3c7' },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '600' },
   cardPrice: { fontSize: 15, fontWeight: '800', color: '#C4A35A', marginBottom: 4 },
   cardTitle: { fontSize: 13, fontWeight: '600', color: '#212529', marginBottom: 6, lineHeight: 18 },

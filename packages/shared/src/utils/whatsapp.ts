@@ -8,7 +8,7 @@ export function buildWhatsAppLink(
 ): string {
   const url = `${appUrl}/property/${property.slug}`;
   const title = getLocalizedText(property.title_ar, property.title_en, lang);
-  const price = formatPrice(property.price, lang, 'SYP', property.price_period);
+  const price = formatPrice(property.price, lang, property.currency, property.price_period);
   const listingType = property.listing_type === 'sale'
     ? (lang === 'ar' ? 'للبيع' : 'For Sale')
     : (lang === 'ar' ? 'للإيجار' : 'For Rent');

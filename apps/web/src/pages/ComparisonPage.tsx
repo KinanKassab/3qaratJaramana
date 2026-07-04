@@ -53,7 +53,7 @@ export function ComparisonPage() {
   const rows = [
     {
       label: language === 'ar' ? 'السعر' : 'Price',
-      render: (p: PropertyWithRelations) => formatPrice(p.price, language, 'SYP'),
+      render: (p: PropertyWithRelations) => formatPrice(p.price, language, p.currency),
     },
     {
       label: language === 'ar' ? 'المساحة' : 'Area',
@@ -87,12 +87,6 @@ export function ComparisonPage() {
       label: language === 'ar' ? 'الفئة' : 'Category',
       render: (p: PropertyWithRelations) => p.category
         ? getLocalizedText(p.category.name_ar, p.category.name_en, language)
-        : '—',
-    },
-    {
-      label: language === 'ar' ? 'مميز' : 'Featured',
-      render: (p: PropertyWithRelations) => p.is_featured
-        ? <Check className="h-4 w-4 text-primary-500 mx-auto" />
         : '—',
     },
   ];
@@ -183,7 +177,7 @@ export function ComparisonPage() {
                             {title}
                           </Link>
                           <p className="text-primary-600 font-semibold text-sm mt-1" dir="ltr">
-                            {formatPrice(p.price, language, 'SYP')}
+                            {formatPrice(p.price, language, p.currency)}
                           </p>
                         </div>
                       </th>
