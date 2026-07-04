@@ -47,8 +47,8 @@ const SYP_PRICE_PRESETS: PricePreset[] = [
   { id: 'syp-200-300', label_ar: '200 - 300 مليون', label_en: '200–300M', min: 200_000_000, max: 300_000_000 },
   { id: 'syp-300-500', label_ar: '300 - 500 مليون', label_en: '300–500M', min: 300_000_000, max: 500_000_000 },
   { id: 'syp-500-950', label_ar: '500 - 950 مليون', label_en: '500–950M', min: 500_000_000, max: 950_000_000 },
-  { id: 'syp-950-1300', label_ar: '950 - 1300 مليون', label_en: '950–1300M', min: 950_000_000, max: 1_300_000_000 },
-  { id: 'syp-1300plus', label_ar: 'أكثر من 1300 مليون', label_en: '1300M+', min: 1_300_000_000 },
+  { id: 'syp-950-1300', label_ar: '950 مليون - مليار و300 مليون', label_en: '950M–1.3B', min: 950_000_000, max: 1_300_000_000 },
+  { id: 'syp-1300plus', label_ar: 'أكثر من مليار و300 مليون', label_en: '1.3B+', min: 1_300_000_000 },
 ];
 
 export function PropertyFilters({ onFiltersChange, collapsed = false }: PropertyFiltersProps) {
