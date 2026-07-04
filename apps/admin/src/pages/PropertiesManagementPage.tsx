@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Plus, Search, Edit, Trash2, BarChart2, Eye,
+  Plus, Search, Edit, Trash2, BarChart2, Eye, Send,
   ChevronUp, ChevronDown,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -40,7 +40,7 @@ export function PropertiesManagementPage() {
         .from('properties')
         .select(`
           id, title_ar, title_en, slug, price, currency, status, listing_type,
-          view_count, created_at, agent_id,
+          source, view_count, created_at, agent_id,
           images:property_images(url, is_cover),
           location:locations(name_ar, name_en),
           category:categories(name_ar, name_en)
@@ -174,6 +174,11 @@ export function PropertiesManagementPage() {
                               {language === 'ar' ? p.location?.name_ar : p.location?.name_en}
                             </p>
                           </div>
+                          {p.source === 'telegram' && (
+                            <span title="عقار مستورد من تيليغرام" className="flex-shrink-0">
+                              <Send className="h-3.5 w-3.5 text-sky-500" />
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="table-cell font-medium" dir="ltr">

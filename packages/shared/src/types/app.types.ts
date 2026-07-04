@@ -96,6 +96,8 @@ export interface Property {
   parking_spaces?: number | null;
   is_furnished: boolean;
   amenities: string[];
+  source: 'manual' | 'telegram';
+  telegram_message_id?: number | null;
   agent_id?: string | null;
   view_count: number;
   created_at: string;
