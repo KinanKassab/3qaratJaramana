@@ -2,54 +2,25 @@ import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // ============================================================
-// Telegram channel → draft property importer
+// One-time backfill: imports historical posts from the public
+// Telegram channel preview (t.me/s/<channel>) as draft properties.
+// Reuses the same listing-format parser as telegram-webhook, but
+// reads photos straight from the preview's CDN links instead of
+// the Bot API (no bot token needed for this one-off migration).
 //
-// Receives channel_post updates from a Telegram Bot API webhook,
-// parses the site's fixed listing format (numbered fields: الموقع،
-// المساحة، الطابق، التقسيم، الكسوة، السعر), and inserts a draft
-// property for admin review — never publishes automatically.
+// Invoke with POST { "before"?: number } — omit "before" to start
+// from the newest page. Response includes next_before to continue;
+// call again with that value until "done": true.
 // ============================================================
+
+const CHANNEL = 'jaramana_grand_real_estate';
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-// Secrets live in Supabase Vault (not dashboard function secrets) —
-// read once per warm instance via a SECURITY DEFINER RPC restricted
-// to the service_role this function authenticates as.
-let cachedBotToken: string | null = null;
-let cachedWebhookSecret: string | null = null;
-
-async function getTelegramBotToken(): Promise<string> {
-  if (cachedBotToken) return cachedBotToken;
-  const { data } = await supabase.rpc('get_telegram_secret', { secret_name: 'telegram_bot_token' });
-  cachedBotToken = data ?? '';
-  return cachedBotToken;
-}
-
-async function getWebhookSecret(): Promise<string> {
-  if (cachedWebhookSecret) return cachedWebhookSecret;
-  const { data } = await supabase.rpc('get_telegram_secret', { secret_name: 'telegram_webhook_secret' });
-  cachedWebhookSecret = data ?? '';
-  return cachedWebhookSecret;
-}
-
 const LABELS = ['الموقع', 'المساحة', 'الطابق', 'التقسيم', 'الكسوة', 'السعر'];
-
-interface TelegramPhoto {
-  file_id: string;
-  width: number;
-  height: number;
-}
-
-interface TelegramChannelPost {
-  message_id: number;
-  text?: string;
-  caption?: string;
-  media_group_id?: string;
-  photo?: TelegramPhoto[];
-}
 
 // Strips a trailing line that's just the next field's leading marker
 // (emoji/digit/underscore, no Arabic letters) left over from cutting
@@ -127,7 +98,6 @@ function parsePrice(text: string | null): { price: number; currency: 'SYP' | 'US
 
   if (/الف|ألف/.test(text)) return { price: Math.round(num * 1000), currency: 'USD' };
   if (/مليون/.test(text)) return { price: Math.round(num * 1_000_000), currency: 'SYP' };
-  // No unit word found — guess by magnitude: large raw numbers are SYP, small ones USD
   return { price: Math.round(num), currency: num >= 100_000 ? 'SYP' : 'USD' };
 }
 
@@ -168,49 +138,80 @@ async function getJaramanaCityId(): Promise<string | null> {
   return data?.id ?? null;
 }
 
-// The office posts a listing's caption first, then its photo(s) as
-// separate follow-up messages (not a real Telegram media group), so a
-// photo-only post with no media_group_id is attached to whichever
-// telegram-sourced property was created most recently.
-async function findRecentOpenProperty(): Promise<string | null> {
-  const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-  const { data } = await supabase
-    .from('properties')
-    .select('id')
-    .eq('source', 'telegram')
-    .gte('created_at', cutoff)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  return data?.id ?? null;
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
 }
 
-async function downloadTelegramFile(fileId: string): Promise<{ blob: Blob; ext: string; contentType: string } | null> {
-  const botToken = await getTelegramBotToken();
-  const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
-  const fileJson = await fileRes.json();
-  const filePath: string | undefined = fileJson?.result?.file_path;
-  if (!filePath) return null;
-
-  const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
-  const res = await fetch(fileUrl);
-  if (!res.ok) return null;
-
-  const blob = await res.blob();
-  const ext = filePath.split('.').pop() || 'jpg';
-  return { blob, ext, contentType: blob.type || `image/${ext === 'jpg' ? 'jpeg' : ext}` };
+function htmlToText(html: string): string {
+  return decodeHtmlEntities(html.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')).trim();
 }
 
-async function attachPhoto(propertyId: string, fileId: string, messageId: number): Promise<void> {
+interface ParsedBlock {
+  messageId: number;
+  text: string;
+  photoUrls: string[];
+  videoThumbUrls: string[];
+}
+
+function parseBlocks(html: string): ParsedBlock[] {
+  const blocks: ParsedBlock[] = [];
+  const postRegex = new RegExp(`data-post="${CHANNEL}/(\\d+)"`, 'g');
+  const matches = [...html.matchAll(postRegex)];
+
+  for (let i = 0; i < matches.length; i++) {
+    const messageId = parseInt(matches[i][1], 10);
+    const start = matches[i].index!;
+    const end = i + 1 < matches.length ? matches[i + 1].index! : html.length;
+    const block = html.slice(start, end);
+
+    const textMatch = block.match(/tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+    const text = textMatch ? htmlToText(textMatch[1]) : '';
+
+    const photoUrls: string[] = [];
+    const photoRegex = /class="tgme_widget_message_photo_wrap[^"]*"[^>]*style="[^"]*background-image:url\('([^']+)'\)/g;
+    let pm;
+    while ((pm = photoRegex.exec(block))) {
+      photoUrls.push(pm[1]);
+    }
+
+    // Fallback cover when a listing only has a video attached — the
+    // preview's blurred thumbnail beats no image at all; the admin can
+    // swap in a real photo during review.
+    const videoThumbUrls: string[] = [];
+    const videoThumbRegex = /class="tgme_widget_message_video_thumb"[^>]*style="[^"]*background-image:url\('([^']+)'\)/g;
+    let vm;
+    while ((vm = videoThumbRegex.exec(block))) {
+      videoThumbUrls.push(vm[1]);
+    }
+
+    blocks.push({ messageId, text, photoUrls, videoThumbUrls });
+  }
+  return blocks;
+}
+
+function findPrevBefore(html: string): number | null {
+  const m = html.match(/rel="prev"\s+href="\/s\/[^"?]+\?before=(\d+)"/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+async function attachPhotoFromUrl(propertyId: string, photoUrl: string, messageId: number, index: number): Promise<void> {
+  const dedupeKey = messageId * 100 + index; // unique per photo within a backfilled post
   const { data: existing } = await supabase
     .from('property_images')
     .select('id')
-    .eq('telegram_message_id', messageId)
+    .eq('telegram_message_id', dedupeKey)
     .maybeSingle();
   if (existing) return;
 
-  const file = await downloadTelegramFile(fileId);
-  if (!file) return;
+  const res = await fetch(photoUrl);
+  if (!res.ok) return;
+  const blob = await res.blob();
 
   const { count } = await supabase
     .from('property_images')
@@ -218,35 +219,35 @@ async function attachPhoto(propertyId: string, fileId: string, messageId: number
     .eq('property_id', propertyId);
   const sortOrder = count ?? 0;
 
-  const path = `telegram/${propertyId}/${Date.now()}-${sortOrder}.${file.ext}`;
+  const path = `telegram/${propertyId}/${Date.now()}-${sortOrder}.jpg`;
   const { error: uploadError } = await supabase.storage
     .from('property-images')
-    .upload(path, file.blob, { contentType: file.contentType });
+    .upload(path, blob, { contentType: 'image/jpeg' });
   if (uploadError) {
-    console.error('image upload error', uploadError);
+    console.error('backfill image upload error', uploadError);
     return;
   }
 
   const { data: publicUrlData } = supabase.storage.from('property-images').getPublicUrl(path);
-
   await supabase.from('property_images').insert({
     property_id: propertyId,
     url: publicUrlData.publicUrl,
     storage_path: path,
     is_cover: sortOrder === 0,
     sort_order: sortOrder,
-    telegram_message_id: messageId,
+    telegram_message_id: dedupeKey,
   });
 }
 
-async function createPropertyFromText(text: string, messageId: number): Promise<string | null> {
+async function createPropertyFromBlock(block: ParsedBlock): Promise<string | null> {
   const { data: existing } = await supabase
     .from('properties')
     .select('id')
-    .eq('telegram_message_id', messageId)
+    .eq('telegram_message_id', block.messageId)
     .maybeSingle();
   if (existing) return existing.id;
 
+  const text = block.text;
   const listingType = detectListingType(text);
   const locationText = extractField(text, 'الموقع');
   const areaText = extractField(text, 'المساحة');
@@ -275,7 +276,7 @@ async function createPropertyFromText(text: string, messageId: number): Promise<
     finishText ? `الكسوة: ${finishText}` : null,
   ].filter(Boolean);
 
-  const slug = `telegram-${messageId}-${Date.now().toString().slice(-6)}`;
+  const slug = `telegram-${block.messageId}-${Date.now().toString().slice(-6)}`;
 
   const { data: category } = await supabase
     .from('categories')
@@ -301,13 +302,13 @@ async function createPropertyFromText(text: string, messageId: number): Promise<
       bathrooms,
       floor_number: floorNumber,
       source: 'telegram',
-      telegram_message_id: messageId,
+      telegram_message_id: block.messageId,
     })
     .select('id')
     .single();
 
   if (error) {
-    console.error('property insert error', error);
+    console.error('backfill property insert error', error);
     return null;
   }
   return inserted.id;
@@ -316,88 +317,75 @@ async function createPropertyFromText(text: string, messageId: number): Promise<
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok');
 
-  const webhookSecret = await getWebhookSecret();
-  if (webhookSecret) {
-    const header = req.headers.get('x-telegram-bot-api-secret-token');
-    if (header !== webhookSecret) {
-      return new Response('unauthorized', { status: 401 });
-    }
-  }
-
   try {
-    const update = await req.json();
-    const post: TelegramChannelPost | undefined = update.channel_post ?? update.edited_channel_post;
-    // Always 200 on anything we don't handle so Telegram doesn't disable the webhook after retries
-    if (!post) return new Response('ok');
+    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const before: number | undefined = body?.before;
 
-    const text = post.text ?? post.caption ?? '';
-    const messageId = post.message_id;
-    const mediaGroupId = post.media_group_id ?? null;
-    const photos = post.photo;
-    const largestPhoto = photos?.[photos.length - 1]; // Telegram sorts ascending by size
-    const hasListingPattern = /السعر/.test(text);
+    const pageUrl = before
+      ? `https://t.me/s/${CHANNEL}?before=${before}`
+      : `https://t.me/s/${CHANNEL}`;
 
-    if (mediaGroupId) {
-      const { data: album } = await supabase
-        .from('telegram_albums')
-        .select('property_id')
-        .eq('media_group_id', mediaGroupId)
-        .maybeSingle();
+    const pageRes = await fetch(pageUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; JaramanaBackfill/1.0)' },
+    });
+    if (!pageRes.ok) {
+      return new Response(JSON.stringify({ error: `fetch failed: ${pageRes.status}` }), { status: 502 });
+    }
+    const html = await pageRes.text();
 
-      if (album?.property_id) {
-        if (largestPhoto) await attachPhoto(album.property_id, largestPhoto.file_id, messageId);
-        return new Response('ok');
+    const blocks = parseBlocks(html);
+    let imported = 0;
+    let skipped = 0;
+
+    // Photos/videos for a listing are posted as separate messages right
+    // after its caption (not bundled in the same data-post block) — so
+    // pull in every sibling block's photos up to the next captioned
+    // listing (next block containing "السعر").
+    let idx = 0;
+    while (idx < blocks.length) {
+      const block = blocks[idx];
+      if (!/السعر/.test(block.text)) {
+        skipped++;
+        idx++;
+        continue;
       }
 
-      if (hasListingPattern) {
-        const propertyId = await createPropertyFromText(text, messageId);
-        if (propertyId) {
-          await supabase.from('telegram_albums').insert({ media_group_id: mediaGroupId, property_id: propertyId });
-          if (largestPhoto) await attachPhoto(propertyId, largestPhoto.file_id, messageId);
+      const photoUrls = [...block.photoUrls];
+      const videoThumbUrls = [...block.videoThumbUrls];
+      let next = idx + 1;
+      while (next < blocks.length && !/السعر/.test(blocks[next].text)) {
+        photoUrls.push(...blocks[next].photoUrls);
+        videoThumbUrls.push(...blocks[next].videoThumbUrls);
+        next++;
+      }
+      // Only fall back to blurred video thumbnails when no real photo exists
+      const images = photoUrls.length > 0 ? photoUrls : videoThumbUrls;
 
-          const { data: pending } = await supabase
-            .from('telegram_pending_media')
-            .select('*')
-            .eq('media_group_id', mediaGroupId);
-          for (const p of pending ?? []) {
-            await attachPhoto(propertyId, p.file_id, p.message_id);
-          }
-          if (pending?.length) {
-            await supabase.from('telegram_pending_media').delete().eq('media_group_id', mediaGroupId);
-          }
+      const propertyId = await createPropertyFromBlock({ ...block, photoUrls: images });
+      if (propertyId) {
+        imported++;
+        for (let i = 0; i < images.length; i++) {
+          await attachPhotoFromUrl(propertyId, images[i], block.messageId, i);
         }
-        return new Response('ok');
       }
-
-      // Caption hasn't arrived yet — buffer this photo for when it does
-      if (largestPhoto) {
-        await supabase.from('telegram_pending_media').insert({
-          media_group_id: mediaGroupId,
-          file_id: largestPhoto.file_id,
-          message_id: messageId,
-        });
-      }
-      return new Response('ok');
+      idx = next;
     }
 
-    // Not part of an album and no listing pattern — likely a follow-up
-    // photo/video for the most recent listing, or a decorative separator
-    if (!hasListingPattern) {
-      if (largestPhoto) {
-        const recentPropertyId = await findRecentOpenProperty();
-        if (recentPropertyId) await attachPhoto(recentPropertyId, largestPhoto.file_id, messageId);
-      }
-      return new Response('ok');
-    }
+    const nextBefore = findPrevBefore(html);
 
-    const propertyId = await createPropertyFromText(text, messageId);
-    if (propertyId && largestPhoto) {
-      await attachPhoto(propertyId, largestPhoto.file_id, messageId);
-    }
-
-    return new Response('ok');
+    return new Response(
+      JSON.stringify({
+        page_url: pageUrl,
+        blocks_seen: blocks.length,
+        imported,
+        skipped,
+        next_before: nextBefore,
+        done: nextBefore === null,
+      }),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
   } catch (err) {
-    console.error('telegram-webhook error', err);
-    return new Response('ok');
+    console.error('telegram-backfill error', err);
+    return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
   }
 });
