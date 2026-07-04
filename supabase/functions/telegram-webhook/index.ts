@@ -10,13 +10,30 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // property for admin review — never publishes automatically.
 // ============================================================
 
-const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? '';
-const TELEGRAM_WEBHOOK_SECRET = Deno.env.get('TELEGRAM_WEBHOOK_SECRET') ?? '';
-
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
+
+// Secrets live in Supabase Vault (not dashboard function secrets) —
+// read once per warm instance via a SECURITY DEFINER RPC restricted
+// to the service_role this function authenticates as.
+let cachedBotToken: string | null = null;
+let cachedWebhookSecret: string | null = null;
+
+async function getTelegramBotToken(): Promise<string> {
+  if (cachedBotToken) return cachedBotToken;
+  const { data } = await supabase.rpc('get_telegram_secret', { secret_name: 'telegram_bot_token' });
+  cachedBotToken = data ?? '';
+  return cachedBotToken;
+}
+
+async function getWebhookSecret(): Promise<string> {
+  if (cachedWebhookSecret) return cachedWebhookSecret;
+  const { data } = await supabase.rpc('get_telegram_secret', { secret_name: 'telegram_webhook_secret' });
+  cachedWebhookSecret = data ?? '';
+  return cachedWebhookSecret;
+}
 
 const LABELS = ['الموقع', 'المساحة', 'الطابق', 'التقسيم', 'الكسوة', 'السعر'];
 
@@ -141,12 +158,13 @@ async function getJaramanaCityId(): Promise<string | null> {
 }
 
 async function downloadTelegramFile(fileId: string): Promise<{ blob: Blob; ext: string; contentType: string } | null> {
-  const fileRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${fileId}`);
+  const botToken = await getTelegramBotToken();
+  const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
   const fileJson = await fileRes.json();
   const filePath: string | undefined = fileJson?.result?.file_path;
   if (!filePath) return null;
 
-  const fileUrl = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${filePath}`;
+  const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
   const res = await fetch(fileUrl);
   if (!res.ok) return null;
 
@@ -270,9 +288,10 @@ async function createPropertyFromText(text: string, messageId: number): Promise<
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok');
 
-  if (TELEGRAM_WEBHOOK_SECRET) {
+  const webhookSecret = await getWebhookSecret();
+  if (webhookSecret) {
     const header = req.headers.get('x-telegram-bot-api-secret-token');
-    if (header !== TELEGRAM_WEBHOOK_SECRET) {
+    if (header !== webhookSecret) {
       return new Response('unauthorized', { status: 401 });
     }
   }
